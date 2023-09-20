@@ -1,7 +1,20 @@
-fun main(args: Array<String>) {
-    println("Hello World!")
+import Ast.AstBuilder
+import Ast.AstPrinter
+import java.io.File
 
-    // Try adding program arguments via Run/Debug configuration.
-    // Learn more about running applications: https://www.jetbrains.com/help/idea/running-applications.html.
-    println("Program arguments: ${args.joinToString()}")
+fun osprey(block: () -> Unit) {
+    try {
+        block()
+    } catch (osp: OspreyThrowable) {
+        printErrorStack()
+    }
+}
+
+fun main(args: Array<String>) {
+    osprey {
+        val file = File("main.osp").readText()
+        val astBuilder = AstBuilder(file, "main.osp")
+        val ast = astBuilder.build()
+        AstPrinter().visit(ast)
+    }
 }

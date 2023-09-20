@@ -1,0 +1,15 @@
+import env
+
+gen fun f(a):
+    deref a .b
+    for i in a:
+        return i
+
+if __name__ == "__main__":
+    name = input("name? ")
+    for _ in f(name):
+        print(_)
+        print(__its_GaRY_yay_)
+
+fun user_is_admin(username):
+    return True if username == env.is_admin(username) else False
