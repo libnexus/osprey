@@ -131,8 +131,8 @@ class Lexeme(
  */
 val keywords = arrayOf(
     "and", "as", "break", "catch", "class", "continue", "deref", "else", "false", "finally", "for", "fun", "gen", "if",
-    "import", "in", "instance", "is", "not", "nothing", "or", "ref", "return", "throw", "true", "try", "val", "var",
-    "while",
+    "import", "in", "instance", "is", "lambda", "not", "nothing", "or", "ref", "return", "throw", "true", "try", "val",
+    "var", "while",
 )
 
 

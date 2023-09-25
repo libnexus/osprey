@@ -293,6 +293,7 @@ class AstBuilder(source: String, fileName: String) {
                     "nothing" -> Constant(NOTHING, atomHead)
                     "ref" -> GetReference(this.eat(Type.IDENTIFIER).value, atomHead)
                     "deref" -> Dereference(this.atom(), atomHead)
+                    "lambda" -> Lambda(this.expression(), atomHead)
                     else -> throw OspreyThrowable(
                         SyntaxErrorOspreyClass,
                         this.lexer.syntaxError("Unexpected keyword '%s'".format(atomHead.value), atomHead))

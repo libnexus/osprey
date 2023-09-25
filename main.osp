@@ -13,3 +13,28 @@ if __name__ == "__main__":
 
 fun user_is_admin(username):
     return True if username == env.is_admin(username) else False
+
+fun filter_less_than_3(list):
+    return list.filter(lambda it < 3)
+
+fun filter_less_than_3(list, lam):
+    less_than_3 = []
+    for item in list:
+        if lam.run(it=item):
+            less_than_3.append(item)
+   return less_than_3
+
+gen fun filter_under_the_hood(list, lam):
+    for item in list:
+        if lam.run(it=item):
+            return item
+
+fun filtered_under_the_hood(list, lam):
+    generator = list.filter(lam)
+    return List(generator)
+
+gen fun lambda a():
+    return q
+
+
+a.run(q=1)
