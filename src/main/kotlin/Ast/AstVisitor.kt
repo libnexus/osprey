@@ -19,6 +19,7 @@ interface AstVisitor {
         is GetReference -> this.visitGetReference(node)
         is Dereference -> this.visitDereference(node)
         is Lambda -> this.visitLambda(node)
+        is BinaryExpression -> this.visitBinaryExpression(node)
         else -> throw OspreyThrowable(OspreyClass.FatalOspreyClass, "An abstract syntax tree somewhere was passed an unhandled node %s".format(node::class.simpleName))
     }
 
@@ -37,4 +38,5 @@ interface AstVisitor {
     fun visitGetReference(node: GetReference)
     fun visitDereference(node: Dereference)
     fun visitLambda(node: Lambda)
+    fun visitBinaryExpression(node: BinaryExpression)
 }

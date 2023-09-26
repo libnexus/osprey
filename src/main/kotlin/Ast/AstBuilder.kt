@@ -10,6 +10,23 @@ import OspreyThrowable
 import Type
 import java.util.*
 
+fun precedence(operator: Type) : Int = when(operator) {
+    Type.DOUBLE_EQUALS -> 1
+    Type.BANG_EQUALS -> 1
+    Type.LESS_THAN -> 1
+    Type.MORE_THAN -> 1
+    Type.LESS_THAN_OR_EQUALS -> 1
+    Type.MORE_THAN_OR_EQUALS -> 1
+    Type.DOUBLE_QUESTION -> 2
+    Type.PLUS -> 3
+    Type.MINUS -> 3
+    Type.STAR -> 4
+    Type.SLASH -> 4
+    Type.DOUBLE_STAR -> 5
+    Type.PERCENT -> 5
+    else -> -1
+}
+
 class AstBuilder(source: String, fileName: String) {
     private val lexer = Lexer(source, fileName)
     private val lexemes = lexer.parseLexemes()
@@ -154,6 +171,29 @@ class AstBuilder(source: String, fileName: String) {
     }
 
     private fun expression(): Expression {
+        return this.binary(0)
+    }
+
+    private fun binary(precedence: Int) : Expression {
+        if (precedence > 5) {
+            return this.atomAccess()
+        } else {
+            var left = this.binary(precedence + 1)
+            while (true) {
+                val operator = this.lexeme
+                val operatorPrecedence = precedence(operator.type)
+                if (operatorPrecedence == precedence) {
+                    this.advance()
+                    left = BinaryExpression(BinaryExpressionType.of(operator.type), left, this.binary(precedence + 1), operator)
+                } else {
+                    break
+                }
+            }
+            return left
+        }
+    }
+
+    private fun atomAccess() : Expression {
         return this.atom()
     }
 

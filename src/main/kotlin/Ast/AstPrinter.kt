@@ -144,4 +144,14 @@ class AstPrinter : AstVisitor {
         this.visit(node.expression)
         this.printer.indent--
     }
+
+    override fun visitBinaryExpression(node: BinaryExpression) {
+        this.printer.group()
+        this.printer.title("Binary (%s):".format(node.operator.name))
+        this.printer.title("Left:")
+        this.visit(node.left)
+        this.printer.newSubTitle("Right:")
+        this.visit(node.right)
+        this.printer.release()
+    }
 }
