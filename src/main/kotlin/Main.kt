@@ -1,5 +1,5 @@
-import Ast.AstBuilder
-import Ast.AstPrinter
+import ast.AstBuilder
+import ast.AstPrinter
 import java.io.File
 
 fun osprey(block: () -> Unit) {

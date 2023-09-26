@@ -1,9 +1,7 @@
-package Ast
+package ast
 
 import Lexeme
 import OspreyObject
-import OspreyThrowable
-import Type
 
 abstract class Node(val at: Lexeme)
 abstract class Statement(at: Lexeme) : Node(at)
@@ -30,6 +28,40 @@ class ListComprehension(
 class ListExpression(values: Array<Expression>, at: Lexeme) : Expressions(values, at)
 class TupleExpression(values: Array<Expression>, at: Lexeme) : Expressions(values, at)
 class DictionaryExpression(keyPairs: Array<Expression>, at: Lexeme) : Expressions(keyPairs, at)
+abstract class SomeCall(
+    val subject: Expression,
+    val args: Array<Expression>?,
+    val keywords: HashMap<String, Expression>?,
+    at: Lexeme
+) : Expression(at)
+
+class AnnotatedExpression(val expression: Expression, val annotation: Expression?)
+class AnnotatedName(val name: String, val annotation: Expression?)
+class CreateFunction(
+    val name: String,
+    val args: Array<AnnotatedName>?,
+    val varArgs: String?,
+    val defaults: HashMap<String, AnnotatedExpression>?,
+    val keywords: String?,
+    val statements: Statements,
+    at: Lexeme
+) : Expression(at)
+
+class Call(
+    subject: Expression,
+    args: Array<Expression>?,
+    keywords: HashMap<String, Expression>?,
+    at: Lexeme
+) : SomeCall(subject, args, keywords, at)
+
+class MacroCall(
+    subject: Expression,
+    args: Array<Expression>?,
+    keywords: HashMap<String, Expression>?,
+    at: Lexeme
+) : SomeCall(subject, args, keywords, at)
+
+class GetAttribute(val subject: Expression, val name: String, at: Lexeme) : Expression(at)
 
 
 // Atom Extras
@@ -39,28 +71,10 @@ enum class BinaryExpressionType {
     EQUALS, NOT_EQUALS, LESS_THAN, MORE_THAN, LESS_THAN_OR_EQ, MORE_THAN_OR_EQ,
     NOT_NULL_OR,
     PLUS, MINUS, MULTIPLY, DIVIDE, POW, MODULO;
-
-    companion object {
-        fun of(operator: Type) : BinaryExpressionType = when(operator) {
-            Type.EQUALS -> EQUALS
-            Type.BANG_EQUALS -> NOT_EQUALS
-            Type.LESS_THAN -> LESS_THAN
-            Type.MORE_THAN -> MORE_THAN
-            Type.LESS_THAN_OR_EQUALS -> LESS_THAN_OR_EQ
-            Type.MORE_THAN_OR_EQUALS -> MORE_THAN_OR_EQ
-            Type.DOUBLE_QUESTION -> NOT_NULL_OR
-            Type.PLUS -> PLUS
-            Type.MINUS -> MINUS
-            Type.STAR -> MULTIPLY
-            Type.SLASH -> DIVIDE
-            Type.DOUBLE_STAR -> POW
-            Type.PERCENT -> MODULO
-            else -> throw OspreyThrowable(OspreyClass.FatalOspreyClass, "Error code 1591524")
-        }
-    }
 }
 
-class BinaryExpression(val operator: BinaryExpressionType, val left: Expression, val right: Expression, at: Lexeme) : Expression(at)
+class BinaryExpression(val operator: BinaryExpressionType, val left: Expression, val right: Expression, at: Lexeme) :
+    Expression(at)
 
 
 // Expression Literals

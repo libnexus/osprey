@@ -1,4 +1,4 @@
-package Ast
+package ast
 
 import OspreyClass.Companion.SyntaxErrorOspreyClass
 import Lexeme
@@ -8,24 +8,7 @@ import OspreyClass.Companion.NOTHING
 import OspreyClass.Companion.TRUE
 import OspreyThrowable
 import Type
-import java.util.*
-
-fun precedence(operator: Type) : Int = when(operator) {
-    Type.DOUBLE_EQUALS -> 1
-    Type.BANG_EQUALS -> 1
-    Type.LESS_THAN -> 1
-    Type.MORE_THAN -> 1
-    Type.LESS_THAN_OR_EQUALS -> 1
-    Type.MORE_THAN_OR_EQUALS -> 1
-    Type.DOUBLE_QUESTION -> 2
-    Type.PLUS -> 3
-    Type.MINUS -> 3
-    Type.STAR -> 4
-    Type.SLASH -> 4
-    Type.DOUBLE_STAR -> 5
-    Type.PERCENT -> 5
-    else -> -1
-}
+import java.util.Stack
 
 class AstBuilder(source: String, fileName: String) {
     private val lexer = Lexer(source, fileName)
@@ -83,10 +66,8 @@ class AstBuilder(source: String, fileName: String) {
     fun eat(type: Type): Lexeme {
         if (this.lexeme.type != type) {
             throw OspreyThrowable(
-                SyntaxErrorOspreyClass,
-                this.lexer.syntaxError(
-                    "Expected %s but got: %s".format(type.looksLike(), identityOf(this.lexeme)),
-                    this.lexeme
+                SyntaxErrorOspreyClass, this.lexer.syntaxError(
+                    "Expected %s but got: %s".format(type.looksLike(), identityOf(this.lexeme)), this.lexeme
                 )
             )
 
@@ -99,10 +80,8 @@ class AstBuilder(source: String, fileName: String) {
     private fun eatKeyword(keyword: String): Lexeme {
         if (this.lexeme.type != Type.KEYWORD || this.lexeme.value != keyword) {
             throw OspreyThrowable(
-                SyntaxErrorOspreyClass,
-                this.lexer.syntaxError(
-                    "Expected keyword '%s' but got: %s".format(keyword, identityOf(this.lexeme)),
-                    this.lexeme
+                SyntaxErrorOspreyClass, this.lexer.syntaxError(
+                    "Expected keyword '%s' but got: %s".format(keyword, identityOf(this.lexeme)), this.lexeme
                 )
             )
         }
@@ -163,28 +142,58 @@ class AstBuilder(source: String, fileName: String) {
 
     private fun singleLineStatement(): Statement {
         val head = this.lexeme
-        run {
-            val expression = ExpressionStatement(this.expression(), head)
-            this.eat(Type.END_LINE)
-            return expression
-        }
+        val expression = ExpressionStatement(this.expression(), head)
+        this.eat(Type.END_LINE)
+        return expression
     }
 
     private fun expression(): Expression {
         return this.binary(0)
     }
 
-    private fun binary(precedence: Int) : Expression {
+    private fun binary(precedence: Int): Expression {
         if (precedence > 5) {
             return this.atomAccess()
         } else {
             var left = this.binary(precedence + 1)
             while (true) {
                 val operator = this.lexeme
-                val operatorPrecedence = precedence(operator.type)
+                val operatorPrecedence = when (operator.type) {
+                    Type.DOUBLE_EQUALS -> 1
+                    Type.BANG_EQUALS -> 1
+                    Type.LESS_THAN -> 1
+                    Type.MORE_THAN -> 1
+                    Type.LESS_THAN_OR_EQUALS -> 1
+                    Type.MORE_THAN_OR_EQUALS -> 1
+                    Type.DOUBLE_QUESTION -> 2
+                    Type.PLUS -> 3
+                    Type.MINUS -> 3
+                    Type.STAR -> 4
+                    Type.SLASH -> 4
+                    Type.DOUBLE_STAR -> 5
+                    Type.PERCENT -> 5
+                    else -> -1
+                }
                 if (operatorPrecedence == precedence) {
                     this.advance()
-                    left = BinaryExpression(BinaryExpressionType.of(operator.type), left, this.binary(precedence + 1), operator)
+                    left = BinaryExpression(
+                        when (operator.type) {
+                            Type.EQUALS -> BinaryExpressionType.EQUALS
+                            Type.BANG_EQUALS -> BinaryExpressionType.NOT_EQUALS
+                            Type.LESS_THAN -> BinaryExpressionType.LESS_THAN
+                            Type.MORE_THAN -> BinaryExpressionType.MORE_THAN
+                            Type.LESS_THAN_OR_EQUALS -> BinaryExpressionType.LESS_THAN_OR_EQ
+                            Type.MORE_THAN_OR_EQUALS -> BinaryExpressionType.MORE_THAN_OR_EQ
+                            Type.DOUBLE_QUESTION -> BinaryExpressionType.NOT_NULL_OR
+                            Type.PLUS -> BinaryExpressionType.PLUS
+                            Type.MINUS -> BinaryExpressionType.MINUS
+                            Type.STAR -> BinaryExpressionType.MULTIPLY
+                            Type.SLASH -> BinaryExpressionType.DIVIDE
+                            Type.DOUBLE_STAR -> BinaryExpressionType.POW
+                            Type.PERCENT -> BinaryExpressionType.MODULO
+                            else -> throw OspreyThrowable(OspreyClass.FatalOspreyClass, "Error code 1591524")
+                        }, left, this.binary(precedence + 1), operator
+                    )
                 } else {
                     break
                 }
@@ -193,8 +202,123 @@ class AstBuilder(source: String, fileName: String) {
         }
     }
 
-    private fun atomAccess() : Expression {
-        return this.atom()
+    private fun callArguments(): Pair<Array<Expression>, HashMap<String, Expression>> {
+        val args = ArrayList<Expression>()
+        val keywords = HashMap<String, Expression>()
+        while (true) {
+            val expression = this.expression()
+            if (this.lexeme.type == Type.EQUALS) {
+                this.advance()
+                if (expression is Lookup) {
+                    val name = expression.name
+                    if (keywords.containsKey(name)) {
+                        throw OspreyThrowable(
+                            SyntaxErrorOspreyClass,
+                            this.lexer.syntaxError("Keyword %s can't be used twice".format(name), expression.at)
+                        )
+                    } else {
+                        keywords[name] = this.expression()
+                    }
+                } else {
+                    throw OspreyThrowable(
+                        SyntaxErrorOspreyClass,
+                        this.lexer.syntaxError("Expected keyword to be a name", expression.at)
+                    )
+                }
+            } else {
+                args.add(expression)
+            }
+
+            if (this.lexeme.type == Type.COMMA) {
+                this.advance()
+            } else {
+                break
+            }
+        }
+        return Pair(args.toTypedArray(), keywords)
+    }
+
+    private fun giveArguments(): Pair<Array<AnnotatedName>, HashMap<String, AnnotatedExpression>> {
+        // TODO redo entire method, got confused with parameters AGAIN
+        val args = ArrayList<AnnotatedName>()
+        val keywords = HashMap<String, AnnotatedExpression>()
+        val usedNames = HashMap<String, Boolean>()
+        while (true) {
+            var annotation: Expression? = null
+            val name = this.eat(Type.IDENTIFIER)
+
+            if (usedNames.getOrDefault(name.value, false)) {
+                throw OspreyThrowable(
+                    SyntaxErrorOspreyClass,
+                    this.lexer.syntaxError("The name \"%s\" is already a parameter name".format(name.value), name)
+                )
+            } else {
+                usedNames[name.value] = true
+            }
+
+            if (this.lexeme.type == Type.COLON) {
+                this.advance()
+                annotation = this.expression()
+            }
+
+            if (this.lexeme.type == Type.EQUALS) {
+                this.advance()
+                val expression = this.expression()
+                keywords[name.value] = AnnotatedExpression(expression, annotation)
+            } else {
+                args.add(AnnotatedName(name.value, annotation))
+            }
+
+            if (this.lexeme.type == Type.COMMA) {
+                this.advance()
+            } else {
+                break
+            }
+        }
+        return Pair(args.toTypedArray(), keywords)
+    }
+
+    private fun atomAccess(): Expression {
+        var subject = this.atom()
+        while (true) {
+            val operator = this.lexeme
+            when (operator.type) {
+                Type.OPEN_PARENS -> {
+                    this.advance()
+                    var args: Array<Expression>? = null
+                    var keywords: HashMap<String, Expression>? = null
+                    if (this.lexeme.type != Type.CLOSE_PARENS) {
+                        val givenArguments = this.callArguments()
+                        args = givenArguments.first
+                        keywords = givenArguments.second
+                    }
+                    this.eat(Type.CLOSE_PARENS)
+                    subject = Call(subject, args, keywords, operator)
+                }
+
+                Type.OPEN_BRACKETS -> {
+                    this.advance()
+                    var args: Array<Expression>? = null
+                    var keywords: HashMap<String, Expression>? = null
+                    if (this.lexeme.type != Type.CLOSE_PARENS) {
+                        val givenArguments = this.callArguments()
+                        args = givenArguments.first
+                        keywords = givenArguments.second
+                    }
+                    this.eat(Type.CLOSE_PARENS)
+                    subject = MacroCall(subject, args, keywords, operator)
+                }
+
+                Type.DOT -> {
+                    this.advance()
+                    val name = this.eat(Type.IDENTIFIER).value
+                    subject = GetAttribute(subject, name, operator)
+                }
+
+                else -> break
+            }
+        }
+        return subject
     }
 
     /**
@@ -336,13 +460,13 @@ class AstBuilder(source: String, fileName: String) {
                     "lambda" -> Lambda(this.expression(), atomHead)
                     else -> throw OspreyThrowable(
                         SyntaxErrorOspreyClass,
-                        this.lexer.syntaxError("Unexpected keyword '%s'".format(atomHead.value), atomHead))
+                        this.lexer.syntaxError("Unexpected keyword '%s'".format(atomHead.value), atomHead)
+                    )
                 }
             }
 
             else -> throw OspreyThrowable(
-                SyntaxErrorOspreyClass,
-                this.lexer.syntaxError("Unexpected %s".format(identityOf(atomHead)), atomHead)
+                SyntaxErrorOspreyClass, this.lexer.syntaxError("Unexpected %s".format(identityOf(atomHead)), atomHead)
             )
         }
     }

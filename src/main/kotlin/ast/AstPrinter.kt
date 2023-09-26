@@ -1,6 +1,6 @@
-package Ast
+package ast
+
 import java.util.Stack
-import kotlin.math.exp
 
 class AstPrinterPrinter {
     var indent = 0
@@ -8,17 +8,29 @@ class AstPrinterPrinter {
     fun print(string: String) {
         println("    ".repeat(indent) + string)
     }
+
     fun title(string: String) {
         this.print(string)
         this.indent++
     }
+
     fun newSubTitle(string: String) {
         this.indent--
         this.print(string)
         this.indent++
     }
+
     fun group() = savedIndentStates.add(this.indent)
-    fun release() { this.indent = savedIndentStates.pop() }
+    fun release() {
+        this.indent = savedIndentStates.pop()
+    }
+
+    fun printIndented(title: String, block: () -> Unit) {
+        this.print(title)
+        this.indent++
+        block()
+        this.indent--
+    }
 }
 
 class AstPrinter : AstVisitor {
@@ -153,5 +165,44 @@ class AstPrinter : AstVisitor {
         this.printer.newSubTitle("Right:")
         this.visit(node.right)
         this.printer.release()
+    }
+
+    fun visitSomeCall(node: SomeCall) {
+        this.printer.printIndented("%s:".format(node::class.simpleName)) {
+            if (node.args != null) {
+                this.printer.printIndented("Arguments:") {
+                    for (arg in node.args) {
+                        if (arg.annotation != null) {
+                            this.printer.printIndented("Argument %s:".format(arg.name)) {
+                                this.printer.printIndented("Annotation:") { this.visit(arg.annotation) }
+                            }
+                        } else {
+                            this.printer.print("Argument %s".format(arg.name))
+                        }
+                    }
+                }
+            }
+
+            if (node.keywords != null) {
+                this.printer.printIndented("Keywords:") {
+                    for ((name, value) in node.keywords.entries) {
+                        this.printer.printIndented("Keyword %s:".format(name)) {
+                            this.printer.printIndented("Value:") { this.visit(value.expression) }
+                            if (value.annotation != null) {
+                                this.printer.printIndented("Annotation:") { this.visit(value.annotation) }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    override fun visitCall(node: Call) {
+        this.visitSomeCall(node)
+    }
+
+    override fun visitMacroCall(node: MacroCall) {
+        this.visitSomeCall(node)
     }
 }

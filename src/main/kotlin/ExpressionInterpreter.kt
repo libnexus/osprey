@@ -1,5 +1,5 @@
-import Ast.AstBuilder
-import Ast.AstPrinter
+import ast.AstBuilder
+import ast.AstPrinter
 
 fun main() {
     while (true) {
