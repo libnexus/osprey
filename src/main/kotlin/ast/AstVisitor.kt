@@ -22,6 +22,7 @@ interface AstVisitor {
         is BinaryExpression -> this.visitBinaryExpression(node)
         is Call -> this.visitCall(node)
         is MacroCall -> this.visitMacroCall(node)
+        is GetAttribute -> this.visitGetAttribute(node)
         else -> throw OspreyThrowable(
             OspreyClass.FatalOspreyClass,
             "An abstract syntax tree somewhere was passed an unhandled node %s".format(node::class.simpleName)
@@ -46,4 +47,5 @@ interface AstVisitor {
     fun visitBinaryExpression(node: BinaryExpression)
     fun visitCall(node: Call)
     fun visitMacroCall(node: MacroCall)
+    fun visitGetAttribute(node: GetAttribute)
 }

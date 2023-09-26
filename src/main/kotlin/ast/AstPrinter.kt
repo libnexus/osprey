@@ -126,7 +126,7 @@ class AstPrinter : AstVisitor {
     }
 
     override fun visitLiteralString(node: LiteralString) {
-        this.printer.print("String: %s".format(node.string))
+        this.printer.print("String: '%s'".format(node.string))
     }
 
     override fun visitLiteralFloat(node: LiteralFloat) {
@@ -167,33 +167,38 @@ class AstPrinter : AstVisitor {
         this.printer.release()
     }
 
-    fun visitSomeCall(node: SomeCall) {
+    private fun visitSomeCall(node: SomeCall) {
         this.printer.printIndented("%s:".format(node::class.simpleName)) {
+            this.printer.printIndented("Subject:") { this.visit(node.subject) }
+
             if (node.args != null) {
-                this.printer.printIndented("Arguments:") {
-                    for (arg in node.args) {
-                        if (arg.annotation != null) {
-                            this.printer.printIndented("Argument %s:".format(arg.name)) {
-                                this.printer.printIndented("Annotation:") { this.visit(arg.annotation) }
-                            }
-                        } else {
-                            this.printer.print("Argument %s".format(arg.name))
+                if (node.args.isEmpty()) {
+                    this.printer.print("No Arguments")
+                } else {
+                    this.printer.printIndented("Arguments:") {
+                        for (arg in node.args) {
+                            this.printer.printIndented("Argument:") { this.visit(arg) }
                         }
                     }
                 }
+            } else {
+                this.printer.print("No Arguments")
             }
 
             if (node.keywords != null) {
-                this.printer.printIndented("Keywords:") {
-                    for ((name, value) in node.keywords.entries) {
-                        this.printer.printIndented("Keyword %s:".format(name)) {
-                            this.printer.printIndented("Value:") { this.visit(value.expression) }
-                            if (value.annotation != null) {
-                                this.printer.printIndented("Annotation:") { this.visit(value.annotation) }
+                if (node.keywords.isEmpty()) {
+                    this.printer.print("No Keywords")
+                } else {
+                    this.printer.printIndented("Keywords:") {
+                        for ((name, value) in node.keywords.entries) {
+                            this.printer.printIndented("Keyword %s:".format(name)) {
+                                this.printer.printIndented("Value:") { this.visit(value) }
                             }
                         }
                     }
                 }
+            } else {
+                this.printer.print("No Keywords")
             }
         }
     }
@@ -204,5 +209,12 @@ class AstPrinter : AstVisitor {
 
     override fun visitMacroCall(node: MacroCall) {
         this.visitSomeCall(node)
+    }
+
+    override fun visitGetAttribute(node: GetAttribute) {
+        this.printer.printIndented("GetAttribute:") {
+            this.printer.print("Name: %s".format(node.name))
+            this.printer.printIndented("Subject:") { this.visit(node.subject) }
+        }
     }
 }

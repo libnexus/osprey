@@ -39,7 +39,7 @@ class AnnotatedExpression(val expression: Expression, val annotation: Expression
 class AnnotatedName(val name: String, val annotation: Expression?)
 class CreateFunction(
     val name: String,
-    val args: Array<AnnotatedName>?,
+    val args: Array<AnnotatedName>,
     val varArgs: String?,
     val defaults: HashMap<String, AnnotatedExpression>?,
     val keywords: String?,

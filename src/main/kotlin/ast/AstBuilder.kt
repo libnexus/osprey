@@ -300,12 +300,12 @@ class AstBuilder(source: String, fileName: String) {
                     this.advance()
                     var args: Array<Expression>? = null
                     var keywords: HashMap<String, Expression>? = null
-                    if (this.lexeme.type != Type.CLOSE_PARENS) {
+                    if (this.lexeme.type != Type.CLOSE_BRACKETS) {
                         val givenArguments = this.callArguments()
                         args = givenArguments.first
                         keywords = givenArguments.second
                     }
-                    this.eat(Type.CLOSE_PARENS)
+                    this.eat(Type.CLOSE_BRACKETS)
                     subject = MacroCall(subject, args, keywords, operator)
                 }
 
