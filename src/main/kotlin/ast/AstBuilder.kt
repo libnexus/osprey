@@ -148,7 +148,63 @@ class AstBuilder(source: String, fileName: String) {
     }
 
     private fun expression(): Expression {
-        return this.binary(0)
+        return this.boolean()
+    }
+
+    private fun boolean() : Expression {
+        var left = this.identity()
+        while (true) {
+            val operator = this.lexeme
+            left = if (this.lexeme.isKeyword("and")) {
+                this.advance()
+                BinaryExpression(BinaryExpressionType.AND, left, this.identity(), operator)
+            } else if (this.lexeme.isKeyword("or")) {
+                this.advance()
+                BinaryExpression(BinaryExpressionType.OR, left, this.identity(), operator)
+            } else {
+                break
+            }
+        }
+        return left
+    }
+
+    private fun identity() : Expression {
+        var left = this.binary(0)
+        while (true) {
+            val operator = this.lexeme
+            left = if (this.lexeme.isKeyword("is")) {
+                this.advance()
+                if (this.lexeme.isKeyword("not")) {
+                    this.advance()
+                    if (this.lexeme.isKeyword("in")) {
+                        this.advance()
+                        BinaryExpression(BinaryExpressionType.IS_NOT_IN, left, this.binary(0), operator)
+                    } else {
+                        val right = this.binary(0)
+                        if (this.lexeme.isKeyword("instance")) {
+                            this.advance()
+                            BinaryExpression(BinaryExpressionType.IS_NOT_INSTANCE, left, right, operator)
+                        } else {
+                            BinaryExpression(BinaryExpressionType.IS_NOT, left, right, operator)
+                        }
+                    }
+                } else if (this.lexeme.isKeyword("in")) {
+                    this.advance()
+                    BinaryExpression(BinaryExpressionType.IS_IN, left, this.binary(0), operator)
+                } else {
+                    val right = this.binary(0)
+                    if (this.lexeme.isKeyword("instance")) {
+                        this.advance()
+                        BinaryExpression(BinaryExpressionType.IS_INSTANCE, left, right, operator)
+                    } else {
+                        BinaryExpression(BinaryExpressionType.IS, left, right, operator)
+                    }
+                }
+            } else {
+                break
+            }
+        }
+        return left
     }
 
     private fun binary(precedence: Int): Expression {

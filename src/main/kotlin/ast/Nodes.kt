@@ -67,7 +67,7 @@ class GetAttribute(val subject: Expression, val name: String, at: Lexeme) : Expr
 // Atom Extras
 enum class BinaryExpressionType {
     AND, OR,
-    IS, IS_NOT, IS_IN, IS_NOT_IN,
+    IS, IS_NOT, IS_IN, IS_NOT_IN, IS_INSTANCE, IS_NOT_INSTANCE,
     EQUALS, NOT_EQUALS, LESS_THAN, MORE_THAN, LESS_THAN_OR_EQ, MORE_THAN_OR_EQ,
     NOT_NULL_OR,
     PLUS, MINUS, MULTIPLY, DIVIDE, POW, MODULO;

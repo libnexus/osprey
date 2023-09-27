@@ -5,11 +5,7 @@ import OspreyClass.Companion.SyntaxErrorOspreyClass
  * Any type that is not mentioned is an illegal character or expression and will raise a syntax error by the lexer
  */
 enum class Type {
-    IDENTIFIER, KEYWORD, FLOAT, INTEGER, STRING, RAW_STRING, END_LINE, START_OF_FILE, END_OF_FILE, INDENT, DEDENT, AT, PLUS, OPEN_PARENS, LESS_THAN,
-    SLASH, EQUALS, CLOSE_BRACKETS, STAR, MINUS, OPEN_BRACKETS, MORE_THAN, CLOSE_PARENS, OPEN_CURLY, DOT, QUESTION_MARK,
-    CLOSE_CURLY, COLON, SEMI_COLON, COMMA, PERCENT, DOUBLE_QUESTION, DOUBLE_EQUALS, DOUBLE_STAR, DOUBLE_DOT, ELVIS,
-    BANG_EQUALS, ARROW_LEFT, ARROW_RIGHT, WIDE_ARROW_RIGHT, LESS_THAN_OR_EQUALS, MORE_THAN_OR_EQUALS,
-    WHITESPACE;
+    IDENTIFIER, KEYWORD, FLOAT, INTEGER, STRING, RAW_STRING, END_LINE, START_OF_FILE, END_OF_FILE, INDENT, DEDENT, AT, PLUS, OPEN_PARENS, LESS_THAN, SLASH, EQUALS, CLOSE_BRACKETS, STAR, MINUS, OPEN_BRACKETS, MORE_THAN, CLOSE_PARENS, OPEN_CURLY, DOT, QUESTION_MARK, CLOSE_CURLY, COLON, SEMI_COLON, COMMA, PERCENT, DOUBLE_QUESTION, DOUBLE_EQUALS, DOUBLE_STAR, DOUBLE_DOT, ELVIS, BANG_EQUALS, ARROW_LEFT, ARROW_RIGHT, WIDE_ARROW_RIGHT, LESS_THAN_OR_EQUALS, MORE_THAN_OR_EQUALS, WHITESPACE;
 
     /**
      * The String representation of the type. This is used by the parser to create error messages that give more context
@@ -109,19 +105,6 @@ class Lexeme(
             )
         }
     }
-
-    /**
-     * Method for returning two lines of string, the first line being the line text that the lexeme first appears on,
-     * the second line being carets to denote the span of the lexeme
-     */
-    fun lineText(): Pair<String, String> {
-        val lineText = "    " + this.lexer.lineTextOfLine(this.lineNo)
-        val underLine = if (this.lineNo == this.lineNoExit)
-            "    " + " ".repeat(this.linePos - 1) + "^".repeat(this.linePosExit - this.linePos)
-        else
-            "    " + " ".repeat(this.linePos - 1) + "^".repeat(lineText.length - this.linePos) + " \\..."
-        return Pair(lineText, underLine)
-    }
 }
 
 
@@ -130,12 +113,40 @@ class Lexeme(
  * alphabetical order
  */
 val keywords = arrayOf(
-    "and", "as", "break", "catch", "class", "continue", "deref", "else", "false", "finally", "for", "fun", "gen", "if",
-    "import", "in", "instance", "is", "lambda", "not", "nothing", "or", "ref", "return", "throw", "true", "try", "val",
-    "var", "while",
+    "and",
+    "as",
+    "break",
+    "catch",
+    "class",
+    "continue",
+    "deref",
+    "else",
+    "extends",
+    "false",
+    "finally",
+    "for",
+    "fun",
+    "gen",
+    "if",
+    "import",
+    "in",
+    "instance",
+    "is",
+    "lambda",
+    "not",
+    "nothing",
+    "or",
+    "ref",
+    "return",
+    "throw",
+    "true",
+    "try",
+    "val",
+    "var",
+    "while",
 )
 
-
+/*
 private val WHITESPACE = Regex("[\r\t ]+")
 private val IDENTIFIER = Regex("[a-zA-Z_$]+[a-zA-Z0-9_$]*")
 private val INTEGER = Regex("\\d+(?:e[+-]?\\d+)?")
@@ -145,16 +156,16 @@ private val LONG_STRING = Regex("\"\"\"([^\n]*?)\"\"\"")
 private val RAW_STRING = Regex("'([^\\n]*?)'")
 private val LONG_RAW_STRING = Regex("'''([^\\n]*?)'''")
 private val COMMENT = Regex("#[^\\n]*")
-
+*/
 
 /**
  * The lexer class which takes the [source] to parse from and the [fileName] of the source it's parsing from to generate
  * lexemes using the [scanNextLexeme] method
  */
-open class Lexer(val source: String, val fileName: String) {
-    var pos: Int = 0
-    var line: Int = 1
-    var linePos: Int = 1
+open class Lexer(private val source: String, val fileName: String) {
+    private var pos: Int = 0
+    private var line: Int = 1
+    private var linePos: Int = 1
     private val eof: Lexeme by lazy {
         Lexeme(
             Type.END_OF_FILE, "End of File", this, this.line, this.linePos, this.line, this.linePos
@@ -176,28 +187,26 @@ open class Lexer(val source: String, val fileName: String) {
      * @return the next lexeme at the current lexing position of the source
      */
     open fun scanNextLexeme(): Lexeme {
-        val comment = COMMENT.matchAt(this.source, this.pos)
-
-        if (comment != null) {
-            for (c: Char in comment.value) {
-                if (c == '\n') {
-                    this.line++
-                    this.linePos = 1
-                } else {
-                    this.linePos++
-                }
-                this.pos++
+        if (this.pos < this.source.length && this.source[this.pos] == '#') {
+            this.pos++
+            this.linePos++
+            while (pos < this.source.length && (this.source[this.pos] == '\n' || this.source[this.pos] == '\r')) {
+                pos++
+                this.linePos++
             }
         }
 
         val line: Int = this.line
         val linePos: Int = this.linePos
 
-        val whitespace = WHITESPACE.matchAt(this.source, this.pos)
-        if (whitespace != null) {
-            this.linePos += whitespace.value.length
-            this.pos += whitespace.value.length
-            return Lexeme(Type.WHITESPACE, whitespace.value, this, line, linePos, this.line, this.linePos)
+        if (pos < this.source.length && (this.source[pos] == ' ' || this.source[pos] == '\t')) {
+            val whitespace = StringBuilder()
+            while (pos < this.source.length && (this.source[pos] == ' ' || this.source[pos] == '\t')) {
+                whitespace.append(this.source[pos])
+                pos++
+                this.linePos++
+            }
+            return Lexeme(Type.WHITESPACE, whitespace.toString(), this, line, linePos, this.line, this.linePos)
         }
 
         if (this.pos >= this.source.length) {
@@ -206,13 +215,14 @@ open class Lexer(val source: String, val fileName: String) {
 
         var type: Type? = null
 
-        if (this.source[this.pos] == '\n') {
+        if (this.source[this.pos] == '\n' || this.source[this.pos] == '\r') {
             this.line++
             this.linePos = 1
             this.pos++
             return Lexeme(Type.END_LINE, "End of Line", this, line, linePos, this.line, this.linePos)
         }
 
+        /*
         val identifier = IDENTIFIER.matchAt(this.source, this.pos)
         if (identifier != null) {
             this.linePos += identifier.value.length
@@ -268,8 +278,9 @@ open class Lexer(val source: String, val fileName: String) {
             this.pos += rawString.value.length
             return Lexeme(Type.RAW_STRING, rawString.groupValues[1], this, line, linePos, this.line, this.linePos)
         }
+        */
 
-        if (this.pos + 2 <= this.source.length) {
+        if (this.pos + 1 < this.source.length) {
             val sub2 = this.source.substring(this.pos, this.pos + 2)
             when (sub2) {
                 "??" -> type = Type.DOUBLE_QUESTION
@@ -323,8 +334,124 @@ open class Lexer(val source: String, val fileName: String) {
             return Lexeme(type, this.source[this.pos - 1].toString(), this, line, linePos, this.line, this.linePos)
         }
 
+        if (this.source[this.pos].isLetter() || this.source[this.pos] == '_') {
+            val identifierNameBuilder = StringBuilder()
+            identifierNameBuilder.append(this.source[this.pos])
+            this.pos++
+            this.linePos++
+
+            while (this.pos < this.source.length && (this.source[this.pos].isLetterOrDigit() || this.source[this.pos] == '_')) {
+                identifierNameBuilder.append(this.source[this.pos])
+                this.pos++
+                this.linePos++
+            }
+
+            val identifierName = identifierNameBuilder.toString()
+
+            return Lexeme(
+                if (keywords.contains(identifierName)) {
+                    Type.KEYWORD
+                } else {
+                    Type.IDENTIFIER
+                }, identifierName, this, line, linePos, this.line, this.linePos
+            )
+        } else if (this.source[this.pos].isDigit()) {
+            val num = StringBuilder()
+
+            while (this.pos < this.source.length && this.source[this.pos].isDigit()) {
+                num.append(this.source[this.pos])
+                this.pos++
+                this.linePos++
+            }
+
+            if (this.pos < this.source.length && this.source[this.pos] == '.') {
+                while (this.pos < this.source.length && this.source[this.pos].isDigit()) {
+                    num.append(this.source[this.pos])
+                    this.pos++
+                    this.linePos++
+                }
+
+                return Lexeme(Type.FLOAT, num.toString(), this, line, linePos, this.line, this.linePos)
+            }
+
+            return Lexeme(Type.INTEGER, num.toString(), this, line, linePos, this.line, this.linePos)
+
+        } else if (this.source[this.pos] == '"' || this.source[this.pos] == '\'' || this.source[this.pos] == '`') {
+            val stringEnd = this.source[this.pos]
+            val stringValue = StringBuilder()
+            this.pos++
+
+            while (this.pos < this.source.length && this.source[this.pos] != stringEnd) {
+                when (this.source[this.pos]) {
+                    '\\' -> {
+                        this.pos++
+                        this.linePos++
+                        if (this.pos < this.source.length && this.source[this.pos] == stringEnd) {
+                            this.pos++
+                            this.linePos++
+                            stringValue.append(stringEnd)
+                        } else {
+                            throw OspreyThrowable(
+                                SyntaxErrorOspreyClass, this.syntaxErrorAt(
+                                    "Unexpected escape character %c".format(this.source[this.pos]), line, linePos
+                                )
+                            )
+                        }
+                    }
+
+                    '\n', '\r' -> {
+                        if (stringEnd == '`') {
+                            stringValue.append(this.source[this.pos])
+                            this.pos++
+                            this.linePos = 1
+                            this.line++
+                        } else {
+                            throw OspreyThrowable(
+                                SyntaxErrorOspreyClass,
+                                this.syntaxErrorAt("Unclosed string broken outside of a grave string", line, linePos)
+                            )
+                        }
+                    }
+
+                    else -> {
+                        stringValue.append(this.source[this.pos])
+                        this.pos++
+                        this.linePos++
+                    }
+                }
+            }
+
+            if (this.pos > this.source.length) {
+                throw OspreyThrowable(
+                    SyntaxErrorOspreyClass,
+                    this.syntaxErrorAt("Unclosed string broken outside of a grave string", line, linePos)
+                )
+            }
+            this.pos++
+
+            return Lexeme(
+                when (stringEnd) {
+                    '`' -> Type.STRING
+                    '"' -> Type.STRING
+                    '\'' -> Type.RAW_STRING
+                    else -> throw OspreyThrowable(
+                        SyntaxErrorOspreyClass, "Impossible string return type error"
+                    )
+                }, stringValue.toString(), this, line, linePos, this.line, this.linePos
+            )
+        }
+
+        val symbol = StringBuilder()
+        while (pos < this.source.length && (this.source[pos] != '\n' || this.source[pos] != '\r')) {
+            symbol.append(this.source[pos])
+            pos++
+            this.linePos++
+        }
+
         throw OspreyThrowable(
-            SyntaxErrorOspreyClass, "Unrecognised symbol at line %d, %d in file \"%s\":\n    %s\n    %s".format(
+            SyntaxErrorOspreyClass, "Unrecognised symbol \"%s\" at line %d, %d in file \"%s\":\n    %s\n    %s".format(
+                symbol.toString().replace("\n", "<\\n>").replace("\r", "<\\r>").replace("\t", "<\\t>")
+                    .replace("\b", "<\\b>"),
                 line,
                 linePos,
                 this.fileName,
@@ -334,6 +461,9 @@ open class Lexer(val source: String, val fileName: String) {
         )
     }
 
+    /**
+     * Parses all the indentation for the program, requires optimization
+     */
     fun parseLexemes(): Array<Lexeme> {
         val lexemes = ArrayList<Lexeme>()
         var lexeme: Lexeme
@@ -363,8 +493,7 @@ open class Lexer(val source: String, val fileName: String) {
                 val endLine = lexemes.removeAt(0)
 
                 if (parsedLexemes.isNotEmpty() && !arrayOf(
-                        Type.END_LINE,
-                        Type.DEDENT
+                        Type.END_LINE, Type.DEDENT
                     ).contains(parsedLexemes[parsedLexemes.size - 1].type)
                 ) {
                     parsedLexemes.add(endLine)
@@ -376,8 +505,8 @@ open class Lexer(val source: String, val fileName: String) {
 
                 if (lexemes.isEmpty()) {
                     break
-                } 
-                
+                }
+
                 if (tail[0].type == Type.WHITESPACE) {
                     lexemes.removeAt(0)
                     if (indentShape.isNotEmpty()) {
@@ -387,9 +516,12 @@ open class Lexer(val source: String, val fileName: String) {
                             currentIndentLevel++
                             currentIndent = currentIndent.substring(indentShape.length)
                         }
-                        
+
                         if (currentIndent.isNotEmpty()) {
-                            throw OspreyThrowable(SyntaxErrorOspreyClass, this.syntaxError("indent goes against established indent pattern", tail[0]))
+                            throw OspreyThrowable(
+                                SyntaxErrorOspreyClass,
+                                this.syntaxError("indent goes against established indent pattern", tail[0])
+                            )
                         }
 
                         if (currentIndentLevel == indentLevel) {
@@ -398,23 +530,66 @@ open class Lexer(val source: String, val fileName: String) {
 
                         if (currentIndentLevel < indentLevel) {
                             while (currentIndentLevel < indentLevel) {
-                                parsedLexemes.add(Lexeme(Type.DEDENT, "", this, tail[0].lineNo, tail[0].linePos, tail[0].lineNoExit, tail[0].linePosExit))
+                                parsedLexemes.add(
+                                    Lexeme(
+                                        Type.DEDENT,
+                                        "",
+                                        this,
+                                        tail[0].lineNo,
+                                        tail[0].linePos,
+                                        tail[0].lineNoExit,
+                                        tail[0].linePosExit
+                                    )
+                                )
                                 indentLevel--
                             }
                         } else if (currentIndentLevel == (indentLevel + 1)) {
                             indentLevel++
-                            parsedLexemes.add(Lexeme(Type.INDENT, "", this, tail[0].lineNo, tail[0].linePos, tail[0].lineNoExit, tail[0].linePosExit))
+                            parsedLexemes.add(
+                                Lexeme(
+                                    Type.INDENT,
+                                    "",
+                                    this,
+                                    tail[0].lineNo,
+                                    tail[0].linePos,
+                                    tail[0].lineNoExit,
+                                    tail[0].linePosExit
+                                )
+                            )
                         } else {
-                            throw OspreyThrowable(SyntaxErrorOspreyClass, this.syntaxError("double (or more) indent detected out of place", tail[0]))
+                            throw OspreyThrowable(
+                                SyntaxErrorOspreyClass,
+                                this.syntaxError("double (or more) indent detected out of place", tail[0])
+                            )
                         }
                     } else {
                         indentShape = tail[0].value
                         indentLevel++
-                        parsedLexemes.add(Lexeme(Type.INDENT, "", this, tail[0].lineNo, tail[0].linePos, tail[0].lineNoExit, tail[0].linePosExit))
+                        parsedLexemes.add(
+                            Lexeme(
+                                Type.INDENT,
+                                "",
+                                this,
+                                tail[0].lineNo,
+                                tail[0].linePos,
+                                tail[0].lineNoExit,
+                                tail[0].linePosExit
+                            )
+                        )
                     }
                 } else {
                     while (indentLevel != 0) {
-                        parsedLexemes.add(Lexeme(Type.DEDENT, "", this, tail[0].lineNo, tail[0].linePos, tail[0].lineNoExit, tail[0].linePosExit))
+                        parsedLexemes.add(
+                            Lexeme(
+                                Type.DEDENT,
+                                "",
+                                this,
+                                tail[0].lineNo,
+                                tail[0].linePos,
+                                tail[0].lineNoExit,
+                                tail[0].linePosExit
+                            )
+                        )
                         indentLevel--
                     }
                 }
@@ -431,12 +606,35 @@ open class Lexer(val source: String, val fileName: String) {
             }
         }
 
-        if (parsedLexemes.isNotEmpty() && !arrayOf(Type.END_LINE, Type.DEDENT).contains(parsedLexemes[parsedLexemes.size - 1].type)) {
-            parsedLexemes.add(Lexeme(Type.END_LINE, "", this, parsedLexemes[parsedLexemes.size - 1].lineNo, parsedLexemes[parsedLexemes.size - 1].linePos, parsedLexemes[parsedLexemes.size - 1].lineNoExit, parsedLexemes[parsedLexemes.size - 1].linePosExit))
+        if (parsedLexemes.isNotEmpty() && !arrayOf(
+                Type.END_LINE, Type.DEDENT
+            ).contains(parsedLexemes[parsedLexemes.size - 1].type)
+        ) {
+            parsedLexemes.add(
+                Lexeme(
+                    Type.END_LINE,
+                    "",
+                    this,
+                    parsedLexemes[parsedLexemes.size - 1].lineNo,
+                    parsedLexemes[parsedLexemes.size - 1].linePos,
+                    parsedLexemes[parsedLexemes.size - 1].lineNoExit,
+                    parsedLexemes[parsedLexemes.size - 1].linePosExit
+                )
+            )
         }
 
         while (indentLevel != 0) {
-            parsedLexemes.add(Lexeme(Type.DEDENT, "", this, parsedLexemes[parsedLexemes.size - 1].lineNo, parsedLexemes[parsedLexemes.size - 1].linePos, parsedLexemes[parsedLexemes.size - 1].lineNoExit, parsedLexemes[parsedLexemes.size - 1].linePosExit))
+            parsedLexemes.add(
+                Lexeme(
+                    Type.DEDENT,
+                    "",
+                    this,
+                    parsedLexemes[parsedLexemes.size - 1].lineNo,
+                    parsedLexemes[parsedLexemes.size - 1].linePos,
+                    parsedLexemes[parsedLexemes.size - 1].lineNoExit,
+                    parsedLexemes[parsedLexemes.size - 1].linePosExit
+                )
+            )
             indentLevel--
         }
 
@@ -445,12 +643,11 @@ open class Lexer(val source: String, val fileName: String) {
         return parsedLexemes.toTypedArray()
     }
 
-    fun syntaxError(message: String, lexeme: Lexeme): String = "%s at line %d, %d in file \"%s\":\n    %s\n    %s".format(
-        message,
-        lexeme.lineNo,
-        lexeme.linePos,
-        this.fileName,
-        this.lineTextOfLine(lexeme.lineNo),
-        " ".repeat(lexeme.linePos - 1) + "^"
-    )
+    fun syntaxError(message: String, lexeme: Lexeme): String =
+        this.syntaxErrorAt(message, lexeme.lineNo, lexeme.linePos)
+
+    private fun syntaxErrorAt(message: String, lineNo: Int, linePos: Int): String =
+        "%s at line %d, %d in file \"%s\":\n    %s\n    %s".format(
+            message, lineNo, linePos, this.fileName, this.lineTextOfLine(lineNo), " ".repeat(linePos - 1) + "^"
+        )
 }

@@ -1,2 +1,1 @@
-my_string[].map(lambda args.add("a:%s" % it))
-println("hello world")
+println(my_string is String instance)
