@@ -1,1 +1,9 @@
-println(my_string is String instance)
+myList = [1, 2, 3, 4]
+# Log items being evaluated
+myList.map {
+    println(
+        "%? < 3 = %?" %
+        {it, it < 3}
+    ),
+    it < 3
+}

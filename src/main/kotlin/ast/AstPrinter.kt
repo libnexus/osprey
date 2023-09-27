@@ -1,15 +1,18 @@
 package ast
 
-import java.util.Stack
+interface AstPrinterManager {
+    fun print(string: String)
+    fun printIndented(title: String, block: () -> Unit)
+}
 
-class AstPrinterPrinter {
+class PlainAstPrinter : AstPrinterManager {
     private var indent = 0
-    
-    fun print(string: String) {
+
+    override fun print(string: String) {
         println("    ".repeat(indent) + string)
     }
 
-    fun printIndented(title: String, block: () -> Unit) {
+    override fun printIndented(title: String, block: () -> Unit) {
         this.print("$title {")
         this.indent++
         block()
@@ -18,13 +21,96 @@ class AstPrinterPrinter {
     }
 }
 
-class AstPrinter : AstVisitor {
-    private val printer = AstPrinterPrinter()
+class HtmlAstPrinter : AstPrinterManager {
+    private val generatedHtml = StringBuilder()
+    private var indent = 3
+
+    init {
+        generatedHtml.append("""
+            <style>
+            /*
+                Created by W3SCHOOLS @ https://www.w3schools.com/howto/howto_js_treeview.asp
+            */
+            
+            body {
+                font-family: "Liberation Mono",serif;
+            }
+            
+            ul, #myUL {
+              list-style-type: none;
+            }
+
+            #myUL {
+              margin: 0;
+              padding: 0;
+            }
+
+            .caret {
+              cursor: pointer;
+              user-select: none; /* Prevent text selection */
+            }
+
+            .caret::before {
+              content: "\25B6";
+              color: black;
+              display: inline-block;
+              margin-right: 6px;
+            }
+
+            .caret-down::before {
+              transform: rotate(90deg);
+            }
+
+            .nested {
+              display: none;
+            }
+
+            .active {
+              display: block;
+            }
+            
+            </style>
+            <ul id="myUL">
+                <li><span class="caret">AST Generation</span>
+                    <ul class="nested">
+        """.trimIndent())
+    }
+    override fun print(string: String) {
+        generatedHtml.append("\n" + "    ".repeat(indent) + "<li>$string</li>")
+    }
+
+    override fun printIndented(title: String, block: () -> Unit) {
+        generatedHtml.append("\n" + "    ".repeat(indent) + "<li><span class=\"caret\">$title</span>")
+        indent++
+        generatedHtml.append("\n" + "    ".repeat(indent) + "<ul class=\"nested\">")
+        indent++
+        block()
+        indent--
+        generatedHtml.append("\n" + "    ".repeat(indent) + "</ul>")
+        indent--
+        generatedHtml.append("\n" + "    ".repeat(indent) + "</li>")
+    }
+
+    fun generateHtml() : String = "$generatedHtml\n        </ul>\n    </li>\n</ul>" + """
+            <script>
+            var toggler = document.getElementsByClassName("caret");
+            var i;
+
+            for (i = 0; i < toggler.length; i++) {
+                toggler[i].addEventListener("click", function() {
+                    this.parentElement.querySelector(".nested").classList.toggle("active");
+                    this.classList.toggle("caret-down");
+                });
+              toggler[i].parentElement.querySelector(".nested").classList.toggle("active");
+              toggler[i].classList.toggle("caret-down");
+            }
+            </script>""".trimIndent()
+}
+
+class AstPrinter(private val printer: AstPrinterManager) : AstVisitor {
 
     override fun visitStatements(node: Statements) {
-        for (statement in node.statements) {
-            this.visit(statement)
-        }
+        node.statements.map { this.visit(it) }
     }
 
     override fun visitExpressionStatement(node: ExpressionStatement) {
@@ -33,13 +119,6 @@ class AstPrinter : AstVisitor {
 
     override fun visitLookup(node: Lookup) {
         this.printer.print("Lookup (${node.name})")
-    }
-
-    override fun visitVariableAssignment(node: VariableAssignment) {
-        this.printer.printIndented("Assignment") {
-            this.printer.print("Name (${node.name})")
-            this.printer.printIndented("Value") { this.visit(node.value) }
-        }
     }
 
     override fun visitListComprehension(node: ListComprehension) {
@@ -57,11 +136,9 @@ class AstPrinter : AstVisitor {
             this.printer.print("Empty List")
             return
         }
-        
+
         this.printer.printIndented("List") {
-            for (expression in node.expressions) {
-                this.printer.printIndented("-") { this.visit(expression) }
-            }
+            node.expressions.map { this.printer.printIndented("-") { this.visit(it) } }
         }
     }
 
@@ -70,11 +147,9 @@ class AstPrinter : AstVisitor {
             this.printer.print("Empty Tuple")
             return
         }
-        
+
         this.printer.printIndented("Tuple") {
-            for (expression in node.expressions) {
-                this.printer.printIndented("-") { this.visit(expression) }
-            }
+            node.expressions.map { this.printer.printIndented("-") { this.visit(it) } }
         }
     }
 
@@ -83,7 +158,7 @@ class AstPrinter : AstVisitor {
             this.printer.print("Empty Dictionary")
             return
         }
-        
+
         this.printer.printIndented("Dictionary") {
             for (i in 0..(node.expressions.size / 2)) {
                 this.printer.printIndented("Key") { this.visit(node.expressions[2 * i]) }
@@ -121,31 +196,21 @@ class AstPrinter : AstVisitor {
     }
 
     override fun visitBinaryExpression(node: BinaryExpression) {
-        
-        this.printer.printIndented("Binary (${node.operator.name.lowercase().replaceFirstChar { it.uppercaseChar() }})") {
+
+        this.printer.printIndented("Binary (${
+            node.operator.name.lowercase().replaceFirstChar { it.uppercaseChar() }
+        })") {
             this.printer.printIndented("Left") { this.visit(node.left) }
             this.printer.printIndented("Right") { this.visit(node.right) }
         }
-        
+
     }
 
-    private fun visitSomeCall(node: SomeCall) {
+    override fun visitCall(node: Call) {
         this.printer.printIndented(node::class.simpleName.toString()) {
             this.printer.printIndented("Subject") { this.visit(node.subject) }
 
-            if (node.args != null) {
-                if (node.args.isEmpty()) {
-                    this.printer.print("No Arguments")
-                } else {
-                    this.printer.printIndented("Arguments") {
-                        for (arg in node.args) {
-                            this.printer.printIndented("Argument") { this.visit(arg) }
-                        }
-                    }
-                }
-            } else {
-                this.printer.print("No Arguments")
-            }
+            this.printIndentedExpressionCollection("Argument", node.args())
 
             if (node.keywords != null) {
                 if (node.keywords.isEmpty()) {
@@ -165,18 +230,81 @@ class AstPrinter : AstVisitor {
         }
     }
 
-    override fun visitCall(node: Call) {
-        this.visitSomeCall(node)
+    private fun printIndentedExpressionCollection(title: String, collection: Array<Expression>?) {
+        if (collection != null) {
+            if (collection.isEmpty()) {
+                this.printer.print("No $title")
+            } else {
+                this.printer.printIndented("${title}s") {
+                    for (arg in collection) {
+                        this.printer.printIndented(title) { this.visit(arg) }
+                    }
+                }
+            }
+        } else {
+            this.printer.print("No $title")
+        }
     }
 
     override fun visitMacroCall(node: MacroCall) {
-        this.visitSomeCall(node)
+        this.printer.printIndented("Macro Call") {
+            this.printer.printIndented("Subject") { this.visit(node.subject) }
+            this.printIndentedExpressionCollection("Macro Argument", node.args)
+        }
     }
 
     override fun visitGetAttribute(node: GetAttribute) {
         this.printer.printIndented("GetAttribute") {
             this.printer.print("Name (${node.name})")
             this.printer.printIndented("Subject") { this.visit(node.subject) }
+        }
+    }
+
+    private fun printAssignment(assignment: SomeAssignment) {
+        this.printer.printIndented("Assignment") {
+            when (assignment) {
+                is NameAssignment -> {
+                    this.printer.print("Assign name (${assignment.name})")
+                }
+
+                is AttributeAssignment -> {
+                    this.printer.printIndented("Assign attribute") {
+                        this.printer.printIndented("Subject") { this.visit(assignment.subject) }
+                        this.printer.print("Name (${assignment.name})")
+                    }
+                }
+
+                is MacroAssignment -> {
+                    this.printer.printIndented("Assign macro") {
+                        this.printer.printIndented("Subject") { this.visit(assignment.subject) }
+                        this.printer.printIndented("Arguments") {
+                            this.printIndentedExpressionCollection(
+                                "Macro Assignment Argument", assignment.macroArgs
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    override fun visitAssignmentExpression(node: AssignmentExpression) {
+        this.printAssignment(node.assignment)
+        this.printer.printIndented("Value") { this.visit(node.expression) }
+    }
+
+    override fun visitAssignmentsExpression(node: AssignmentsExpression) {
+        this.printer.printIndented("Assign Multiple") {
+            this.printer.printIndented("Assignment targets") {
+                node.assignments.map { this.printAssignment(it) }
+            }
+            this.printer.printIndented("Unpack-able? Value") { this.visit(node.expression) }
+        }
+    }
+
+    override fun visitExpressionUnit(node: ExpressionUnit) {
+        this.printer.printIndented("Expression Unit") {
+            this.printIndentedExpressionCollection("Expression", node.expressions)
         }
     }
 }

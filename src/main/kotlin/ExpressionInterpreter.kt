@@ -1,5 +1,6 @@
 import ast.AstBuilder
 import ast.AstPrinter
+import ast.PlainAstPrinter
 
 fun main() {
     while (true) {
@@ -8,7 +9,7 @@ fun main() {
             val input = readln()
             val astBuilder = AstBuilder(input, "input")
             val ast = astBuilder.build()
-            AstPrinter().visit(ast)
+            AstPrinter(PlainAstPrinter()).visit(ast)
         }
     }
 }

@@ -16,7 +16,13 @@ class ExpressionStatement(val expression: Expression, at: Lexeme) : Statement(at
 
 abstract class Expressions(val expressions: Array<Expression>, at: Lexeme) : Expression(at)
 class Lookup(val name: String, at: Lexeme) : Expression(at)
-class VariableAssignment(val name: String, val value: Expression, at: Lexeme) : Expression(at)
+abstract class SomeAssignment
+class AttributeAssignment(val subject: Expression, val name: String) : SomeAssignment()
+class MacroAssignment(val subject: Expression, val macroArgs: Array<Expression>?) : SomeAssignment()
+class NameAssignment(val name: String) : SomeAssignment()
+class AssignmentExpression(val assignment: SomeAssignment, val expression: Expression, at: Lexeme) : Expression(at)
+class AssignmentsExpression(val assignments: Array<SomeAssignment>, val expression: Expression, at: Lexeme) : Expression(at)
+
 class ListComprehension(
     val expression: Expression,
     val names: Array<String>,
@@ -28,12 +34,32 @@ class ListComprehension(
 class ListExpression(values: Array<Expression>, at: Lexeme) : Expressions(values, at)
 class TupleExpression(values: Array<Expression>, at: Lexeme) : Expressions(values, at)
 class DictionaryExpression(keyPairs: Array<Expression>, at: Lexeme) : Expressions(keyPairs, at)
-abstract class SomeCall(
+class Call(
     val subject: Expression,
-    val args: Array<Expression>?,
+    private var args: Array<Expression>?,
     val keywords: HashMap<String, Expression>?,
     at: Lexeme
-) : Expression(at)
+) : Expression(at) {
+    private var unitAltered = false
+
+    fun args() = this.args
+
+    fun insertUnit(unit: ExpressionUnit) : Boolean {
+        return if (this.unitAltered) {
+            false
+        } else {
+            if (args == null) {
+                this.args = arrayOf(unit)
+            } else {
+                val newArgs = this.args!!.toMutableList()
+                newArgs.add(unit)
+                this.args = newArgs.toTypedArray()
+            }
+            this.unitAltered = true
+            true
+        }
+    }
+}
 
 class AnnotatedExpression(val expression: Expression, val annotation: Expression?)
 class AnnotatedName(val name: String, val annotation: Expression?)
@@ -47,19 +73,16 @@ class CreateFunction(
     at: Lexeme
 ) : Expression(at)
 
-class Call(
-    subject: Expression,
-    args: Array<Expression>?,
-    keywords: HashMap<String, Expression>?,
+class ExpressionUnit(
+    val expressions: Array<Expression>,
     at: Lexeme
-) : SomeCall(subject, args, keywords, at)
+) : Expression(at)
 
 class MacroCall(
-    subject: Expression,
-    args: Array<Expression>?,
-    keywords: HashMap<String, Expression>?,
+    val subject: Expression,
+    val args: Array<Expression>?,
     at: Lexeme
-) : SomeCall(subject, args, keywords, at)
+) : Expression(at)
 
 class GetAttribute(val subject: Expression, val name: String, at: Lexeme) : Expression(at)
 

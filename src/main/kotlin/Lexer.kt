@@ -163,9 +163,10 @@ private val COMMENT = Regex("#[^\\n]*")
  * lexemes using the [scanNextLexeme] method
  */
 open class Lexer(private val source: String, val fileName: String) {
-    private var pos: Int = 0
-    private var line: Int = 1
-    private var linePos: Int = 1
+    private var pos = 0
+    private var line = 1
+    private var linePos = 1
+
     private val eof: Lexeme by lazy {
         Lexeme(
             Type.END_OF_FILE, "End of File", this, this.line, this.linePos, this.line, this.linePos
@@ -180,6 +181,17 @@ open class Lexer(private val source: String, val fileName: String) {
      */
     fun lineTextOfLine(line: Int): String = this.source.split("\n")[line - 1]
 
+    private fun pushPastEndLine() {
+        if (this.source[this.pos] == '\n' || this.source[this.pos] == '\r') {
+            this.pos++
+            if (this.source[this.pos] == '\n' || this.source[this.pos] == '\r') {
+                this.pos++
+            }
+        }
+        this.line++
+        this.linePos = 1
+    }
+
     /**
      * Scans the next lexeme of the source
      *
@@ -189,10 +201,8 @@ open class Lexer(private val source: String, val fileName: String) {
     open fun scanNextLexeme(): Lexeme {
         if (this.pos < this.source.length && this.source[this.pos] == '#') {
             this.pos++
-            this.linePos++
-            while (pos < this.source.length && (this.source[this.pos] == '\n' || this.source[this.pos] == '\r')) {
-                pos++
-                this.linePos++
+            while (this.pos < this.source.length && !(this.source[this.pos] == '\n' || this.source[this.pos] == '\r')) {
+                this.pos++
             }
         }
 
@@ -216,69 +226,9 @@ open class Lexer(private val source: String, val fileName: String) {
         var type: Type? = null
 
         if (this.source[this.pos] == '\n' || this.source[this.pos] == '\r') {
-            this.line++
-            this.linePos = 1
-            this.pos++
-            return Lexeme(Type.END_LINE, "End of Line", this, line, linePos, this.line, this.linePos)
+            this.pushPastEndLine()
+            return Lexeme(Type.END_LINE, "", this, line, linePos, line, linePos)
         }
-
-        /*
-        val identifier = IDENTIFIER.matchAt(this.source, this.pos)
-        if (identifier != null) {
-            this.linePos += identifier.value.length
-            this.pos += identifier.value.length
-
-            return Lexeme(
-                if (keywords.contains(identifier.value)) {
-                    Type.KEYWORD
-                } else {
-                    Type.IDENTIFIER
-                }, identifier.value, this, line, linePos, this.line, this.linePos
-            )
-        }
-
-        val floatNumber = FLOAT.matchAt(this.source, this.pos)
-        if (floatNumber != null) {
-            this.linePos += floatNumber.value.length
-            this.pos += floatNumber.value.length
-            return Lexeme(Type.FLOAT, floatNumber.value, this, line, linePos, this.line, this.linePos)
-        }
-
-        val intNumber = INTEGER.matchAt(this.source, this.pos)
-        if (intNumber != null) {
-            this.linePos += intNumber.value.length
-            this.pos += intNumber.value.length
-            return Lexeme(Type.INTEGER, intNumber.value, this, line, linePos, this.line, this.linePos)
-        }
-
-        val string = STRING.matchAt(this.source, this.pos)
-        if (string != null) {
-            this.linePos += string.value.length
-            this.pos += string.value.length
-            return Lexeme(Type.STRING, string.groupValues[1], this, line, linePos, this.line, this.linePos)
-        }
-
-        val longString = LONG_STRING.matchAt(this.source, this.pos)
-        if (longString != null) {
-            this.linePos += longString.value.length
-            this.pos += longString.value.length
-            return Lexeme(Type.STRING, longString.groupValues[1], this, line, linePos, this.line, this.linePos)
-        }
-
-        val rawLongString = LONG_RAW_STRING.matchAt(this.source, this.pos)
-        if (rawLongString != null) {
-            this.linePos += rawLongString.value.length
-            this.pos += rawLongString.value.length
-            return Lexeme(Type.RAW_STRING, rawLongString.groupValues[1], this, line, linePos, this.line, this.linePos)
-        }
-
-        val rawString = RAW_STRING.matchAt(this.source, this.pos)
-        if (rawString != null) {
-            this.linePos += rawString.value.length
-            this.pos += rawString.value.length
-            return Lexeme(Type.RAW_STRING, rawString.groupValues[1], this, line, linePos, this.line, this.linePos)
-        }
-        */
 
         if (this.pos + 1 < this.source.length) {
             val sub2 = this.source.substring(this.pos, this.pos + 2)
@@ -404,7 +354,7 @@ open class Lexer(private val source: String, val fileName: String) {
                             stringValue.append(this.source[this.pos])
                             this.pos++
                             this.linePos = 1
-                            this.line++
+                            this.pushPastEndLine()
                         } else {
                             throw OspreyThrowable(
                                 SyntaxErrorOspreyClass,
@@ -492,15 +442,15 @@ open class Lexer(private val source: String, val fileName: String) {
             if (head.type == Type.END_LINE) {
                 val endLine = lexemes.removeAt(0)
 
+                if (parensLevel > 0) {
+                    continue
+                }
+
                 if (parsedLexemes.isNotEmpty() && !arrayOf(
                         Type.END_LINE, Type.DEDENT
                     ).contains(parsedLexemes[parsedLexemes.size - 1].type)
                 ) {
                     parsedLexemes.add(endLine)
-                }
-
-                if (parensLevel > 0) {
-                    continue
                 }
 
                 if (lexemes.isEmpty()) {

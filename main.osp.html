@@ -1,0 +1,225 @@
+<style>
+/*
+    Created by W3SCHOOLS @ https://www.w3schools.com/howto/howto_js_treeview.asp
+*/
+
+body {
+    font-family: "Liberation Mono",serif;
+}
+
+ul, #myUL {
+  list-style-type: none;
+}
+
+#myUL {
+  margin: 0;
+  padding: 0;
+}
+
+.caret {
+  cursor: pointer;
+  user-select: none; /* Prevent text selection */
+}
+
+.caret::before {
+  content: "\25B6";
+  color: black;
+  display: inline-block;
+  margin-right: 6px;
+}
+
+.caret-down::before {
+  transform: rotate(90deg);
+}
+
+.nested {
+  display: none;
+}
+
+.active {
+  display: block;
+}
+
+</style>
+<ul id="myUL">
+    <li><span class="caret">AST Generation</span>
+        <ul class="nested">
+            <li><span class="caret">Assign Multiple</span>
+                <ul class="nested">
+                    <li><span class="caret">Assignment targets</span>
+                        <ul class="nested">
+                            <li><span class="caret">Assignment</span>
+                                <ul class="nested">
+                                    <li>Assign name (myList)</li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </li>
+                    <li><span class="caret">Unpack-able? Value</span>
+                        <ul class="nested">
+                            <li><span class="caret">Tuple</span>
+                                <ul class="nested">
+                                    <li><span class="caret">-</span>
+                                        <ul class="nested">
+                                            <li><span class="caret">List</span>
+                                                <ul class="nested">
+                                                    <li><span class="caret">-</span>
+                                                        <ul class="nested">
+                                                            <li>Integer (1)</li>
+                                                        </ul>
+                                                    </li>
+                                                    <li><span class="caret">-</span>
+                                                        <ul class="nested">
+                                                            <li>Integer (2)</li>
+                                                        </ul>
+                                                    </li>
+                                                    <li><span class="caret">-</span>
+                                                        <ul class="nested">
+                                                            <li>Integer (3)</li>
+                                                        </ul>
+                                                    </li>
+                                                    <li><span class="caret">-</span>
+                                                        <ul class="nested">
+                                                            <li>Integer (4)</li>
+                                                        </ul>
+                                                    </li>
+                                                </ul>
+                                            </li>
+                                        </ul>
+                                    </li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </li>
+                </ul>
+            </li>
+            <li><span class="caret">Call</span>
+                <ul class="nested">
+                    <li><span class="caret">Subject</span>
+                        <ul class="nested">
+                            <li><span class="caret">GetAttribute</span>
+                                <ul class="nested">
+                                    <li>Name (map)</li>
+                                    <li><span class="caret">Subject</span>
+                                        <ul class="nested">
+                                            <li>Lookup (myList)</li>
+                                        </ul>
+                                    </li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </li>
+                    <li><span class="caret">Arguments</span>
+                        <ul class="nested">
+                            <li><span class="caret">Argument</span>
+                                <ul class="nested">
+                                    <li><span class="caret">Expression Unit</span>
+                                        <ul class="nested">
+                                            <li><span class="caret">Expressions</span>
+                                                <ul class="nested">
+                                                    <li><span class="caret">Expression</span>
+                                                        <ul class="nested">
+                                                            <li><span class="caret">Call</span>
+                                                                <ul class="nested">
+                                                                    <li><span class="caret">Subject</span>
+                                                                        <ul class="nested">
+                                                                            <li>Lookup (println)</li>
+                                                                        </ul>
+                                                                    </li>
+                                                                    <li><span class="caret">Arguments</span>
+                                                                        <ul class="nested">
+                                                                            <li><span class="caret">Argument</span>
+                                                                                <ul class="nested">
+                                                                                    <li><span class="caret">Binary (Modulo)</span>
+                                                                                        <ul class="nested">
+                                                                                            <li><span class="caret">Left</span>
+                                                                                                <ul class="nested">
+                                                                                                    <li>String '%? < 3 = %?'</li>
+                                                                                                </ul>
+                                                                                            </li>
+                                                                                            <li><span class="caret">Right</span>
+                                                                                                <ul class="nested">
+                                                                                                    <li><span class="caret">Tuple</span>
+                                                                                                        <ul class="nested">
+                                                                                                            <li><span class="caret">-</span>
+                                                                                                                <ul class="nested">
+                                                                                                                    <li>Lookup (it)</li>
+                                                                                                                </ul>
+                                                                                                            </li>
+                                                                                                            <li><span class="caret">-</span>
+                                                                                                                <ul class="nested">
+                                                                                                                    <li><span class="caret">Binary (Less_than)</span>
+                                                                                                                        <ul class="nested">
+                                                                                                                            <li><span class="caret">Left</span>
+                                                                                                                                <ul class="nested">
+                                                                                                                                    <li>Lookup (it)</li>
+                                                                                                                                </ul>
+                                                                                                                            </li>
+                                                                                                                            <li><span class="caret">Right</span>
+                                                                                                                                <ul class="nested">
+                                                                                                                                    <li>Integer (3)</li>
+                                                                                                                                </ul>
+                                                                                                                            </li>
+                                                                                                                        </ul>
+                                                                                                                    </li>
+                                                                                                                </ul>
+                                                                                                            </li>
+                                                                                                        </ul>
+                                                                                                    </li>
+                                                                                                </ul>
+                                                                                            </li>
+                                                                                        </ul>
+                                                                                    </li>
+                                                                                </ul>
+                                                                            </li>
+                                                                        </ul>
+                                                                    </li>
+                                                                    <li>No Keywords</li>
+                                                                </ul>
+                                                            </li>
+                                                        </ul>
+                                                    </li>
+                                                    <li><span class="caret">Expression</span>
+                                                        <ul class="nested">
+                                                            <li><span class="caret">Binary (Less_than)</span>
+                                                                <ul class="nested">
+                                                                    <li><span class="caret">Left</span>
+                                                                        <ul class="nested">
+                                                                            <li>Lookup (it)</li>
+                                                                        </ul>
+                                                                    </li>
+                                                                    <li><span class="caret">Right</span>
+                                                                        <ul class="nested">
+                                                                            <li>Integer (3)</li>
+                                                                        </ul>
+                                                                    </li>
+                                                                </ul>
+                                                            </li>
+                                                        </ul>
+                                                    </li>
+                                                </ul>
+                                            </li>
+                                        </ul>
+                                    </li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </li>
+                    <li>No Keywords</li>
+                </ul>
+            </li>
+        </ul>
+    </li>
+</ul><script>
+var toggler = document.getElementsByClassName("caret");
+var i;
+
+for (i = 0; i < toggler.length; i++) {
+    toggler[i].addEventListener("click", function() {
+        this.parentElement.querySelector(".nested").classList.toggle("active");
+        this.classList.toggle("caret-down");
+    });
+  toggler[i].parentElement.querySelector(".nested").classList.toggle("active");
+  toggler[i].classList.toggle("caret-down");
+}
+</script>

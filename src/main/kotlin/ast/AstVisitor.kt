@@ -7,7 +7,6 @@ interface AstVisitor {
         is Statements -> this.visitStatements(node)
         is ExpressionStatement -> this.visitExpressionStatement(node)
         is Lookup -> this.visitLookup(node)
-        is VariableAssignment -> this.visitVariableAssignment(node)
         is ListComprehension -> this.visitListComprehension(node)
         is ListExpression -> this.visitListExpression(node)
         is TupleExpression -> this.visitTupleExpression(node)
@@ -23,6 +22,9 @@ interface AstVisitor {
         is Call -> this.visitCall(node)
         is MacroCall -> this.visitMacroCall(node)
         is GetAttribute -> this.visitGetAttribute(node)
+        is AssignmentExpression -> this.visitAssignmentExpression(node)
+        is AssignmentsExpression -> this.visitAssignmentsExpression(node)
+        is ExpressionUnit -> this.visitExpressionUnit(node)
         else -> throw OspreyThrowable(
             OspreyClass.FatalOspreyClass,
             "An abstract syntax tree somewhere was passed an unhandled node %s".format(node::class.simpleName)
@@ -32,7 +34,6 @@ interface AstVisitor {
     fun visitStatements(node: Statements)
     fun visitExpressionStatement(node: ExpressionStatement)
     fun visitLookup(node: Lookup)
-    fun visitVariableAssignment(node: VariableAssignment)
     fun visitListComprehension(node: ListComprehension)
     fun visitListExpression(node: ListExpression)
     fun visitTupleExpression(node: TupleExpression)
@@ -48,4 +49,7 @@ interface AstVisitor {
     fun visitCall(node: Call)
     fun visitMacroCall(node: MacroCall)
     fun visitGetAttribute(node: GetAttribute)
+    fun visitAssignmentExpression(node: AssignmentExpression)
+    fun visitAssignmentsExpression(node: AssignmentsExpression)
+    fun visitExpressionUnit(node: ExpressionUnit)
 }

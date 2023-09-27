@@ -129,7 +129,8 @@ class AstBuilder(source: String, fileName: String) {
         val head = this.lexeme
         val statements = ArrayList<Statement>()
         while (this.lexeme.type != Type.END_OF_FILE) {
-            statements.add(this.multiLineStatement())
+            val statement = this.multiLineStatement()
+            statements.add(statement)
         }
         this.eat(Type.END_OF_FILE)
         return Statements(statements.toTypedArray(), head)
@@ -142,16 +143,56 @@ class AstBuilder(source: String, fileName: String) {
 
     private fun singleLineStatement(): Statement {
         val head = this.lexeme
-        val expression = ExpressionStatement(this.expression(), head)
-        this.eat(Type.END_LINE)
-        return expression
+        val expressions = this.expressionSequence()
+        val expression = if (expressions.size == 1) {
+            expressions[0]
+        } else {
+            TupleExpression(expressions, head)
+        }
+
+
+        if (this.lexeme.type == Type.EQUALS) {
+            this.advance()
+            if (expressions.all { it is Lookup || it is GetAttribute || it is MacroCall }) {
+                val assignmentValue = TupleExpression(this.expressionSequence(), head)
+                this.eat(Type.END_LINE)
+                return ExpressionStatement(AssignmentsExpression(expressions.map {
+                    when (it) {
+                        is Lookup -> NameAssignment(it.name)
+                        is GetAttribute -> AttributeAssignment(it.subject, it.name)
+                        is MacroCall -> MacroAssignment(it.subject, it.args)
+                        else -> {
+                            throw OspreyThrowable(SyntaxErrorOspreyClass, "Impossible assignment error")
+                        }
+                    }
+                }.toTypedArray(), assignmentValue, head), head)
+            } else {
+                throw OspreyThrowable(
+                    SyntaxErrorOspreyClass,
+                    this.lexer.syntaxError("Invalid assignment target/s", head)
+                )
+            }
+        } else {
+            this.eat(Type.END_LINE)
+            return ExpressionStatement(expression, head)
+        }
     }
 
     private fun expression(): Expression {
         return this.boolean()
     }
 
-    private fun boolean() : Expression {
+    private fun expressionSequence(): Array<Expression> {
+        val expressions = ArrayList<Expression>()
+        expressions.add(this.expression())
+        while (this.lexeme.type == Type.COMMA) {
+            this.advance()
+            expressions.add(this.expression())
+        }
+        return expressions.toTypedArray()
+    }
+
+    private fun boolean(): Expression {
         var left = this.identity()
         while (true) {
             val operator = this.lexeme
@@ -168,7 +209,7 @@ class AstBuilder(source: String, fileName: String) {
         return left
     }
 
-    private fun identity() : Expression {
+    private fun identity(): Expression {
         var left = this.binary(0)
         while (true) {
             val operator = this.lexeme
@@ -355,20 +396,45 @@ class AstBuilder(source: String, fileName: String) {
                 Type.OPEN_BRACKETS -> {
                     this.advance()
                     var args: Array<Expression>? = null
-                    var keywords: HashMap<String, Expression>? = null
                     if (this.lexeme.type != Type.CLOSE_BRACKETS) {
                         val givenArguments = this.callArguments()
                         args = givenArguments.first
-                        keywords = givenArguments.second
+                        if (givenArguments.second.isNotEmpty()) {
+                            throw OspreyThrowable(
+                                SyntaxErrorOspreyClass,
+                                this.lexer.syntaxError(
+                                    "Macros cannot be given any keyword arguments. Supplied \"%s\"".format(
+                                        givenArguments.second.keys.joinToString("\", \"")
+                                    ), operator
+                                )
+                            )
+                        }
                     }
                     this.eat(Type.CLOSE_BRACKETS)
-                    subject = MacroCall(subject, args, keywords, operator)
+                    subject = MacroCall(subject, args, operator)
                 }
 
                 Type.DOT -> {
                     this.advance()
                     val name = this.eat(Type.IDENTIFIER).value
                     subject = GetAttribute(subject, name, operator)
+                }
+
+                Type.OPEN_CURLY -> {
+                    this.advance()
+                    val expressions = this.expressionSequence()
+                    this.eat(Type.CLOSE_CURLY)
+                    if (subject is Call && !subject.insertUnit(ExpressionUnit(expressions, operator))) {
+                        throw OspreyThrowable(
+                            SyntaxErrorOspreyClass,
+                            this.lexer.syntaxError(
+                                "Cannot add an expression unit to a call with an expression unit already present",
+                                operator
+                            )
+                        )
+                    } else {
+                        subject = Call(subject, arrayOf(ExpressionUnit(expressions, operator)), null, operator)
+                    }
                 }
 
                 else -> break
@@ -402,7 +468,7 @@ class AstBuilder(source: String, fileName: String) {
                 this.advance()
                 if (this.lexeme.type == Type.ARROW_LEFT) {
                     this.advance()
-                    VariableAssignment(atomHead.value, this.expression(), atomHead)
+                    AssignmentExpression(NameAssignment(atomHead.value), this.expression(), atomHead)
                 } else {
                     Lookup(atomHead.value, atomHead)
                 }

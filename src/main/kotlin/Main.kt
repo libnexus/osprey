@@ -1,5 +1,6 @@
 import ast.AstBuilder
 import ast.AstPrinter
+import ast.HtmlAstPrinter
 import java.io.File
 
 fun osprey(block: () -> Unit) {
@@ -12,9 +13,14 @@ fun osprey(block: () -> Unit) {
 
 fun main(args: Array<String>) {
     osprey {
-        val file = File("main.osp").readText()
-        val astBuilder = AstBuilder(file, "main.osp")
+        val file = File("main.osp")
+        val astBuilder = AstBuilder(file.readText(), "main.osp")
         val ast = astBuilder.build()
-        AstPrinter().visit(ast)
+
+        val out = File("main.osp.html")
+        val htmlAstPrinter = HtmlAstPrinter()
+        AstPrinter(htmlAstPrinter).visit(ast)
+        out.writeText(htmlAstPrinter.generateHtml())
+        println("AST generated to ${out.absolutePath}")
     }
 }
