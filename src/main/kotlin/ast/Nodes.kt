@@ -11,6 +11,9 @@ abstract class Expression(at: Lexeme) : Node(at)
 
 class Statements(val statements: Array<Statement>, at: Lexeme) : Statement(at)
 class ExpressionStatement(val expression: Expression, at: Lexeme) : Statement(at)
+class Ellipses(at: Lexeme) : Statement(at)
+class IfStatement(val ifExpression: Pair<Expression, Statement>, val elifExpressions: Array<Pair<Expression, Statement>>?, val elseExpression: Statement?, at: Lexeme) : Statement(at)
+class ForStatement(val names: Array<AnnotatedName>, val iterable: Expression, val statements: Statement, at: Lexeme) : Statement(at)
 
 // Expression Types
 
@@ -33,7 +36,7 @@ class ListComprehension(
 
 class ListExpression(values: Array<Expression>, at: Lexeme) : Expressions(values, at)
 class TupleExpression(values: Array<Expression>, at: Lexeme) : Expressions(values, at)
-class DictionaryExpression(keyPairs: Array<Expression>, at: Lexeme) : Expressions(keyPairs, at)
+class DictionaryExpression(val keyPairs: Array<Pair<Expression, Expression>>, at: Lexeme) : Expression(at)
 class Call(
     val subject: Expression,
     private var args: Array<Expression>?,
@@ -92,6 +95,7 @@ enum class BinaryExpressionType {
     AND, OR,
     IS, IS_NOT, IS_IN, IS_NOT_IN, IS_INSTANCE, IS_NOT_INSTANCE,
     EQUALS, NOT_EQUALS, LESS_THAN, MORE_THAN, LESS_THAN_OR_EQ, MORE_THAN_OR_EQ,
+    RANGE_BETWEEN,
     NOT_NULL_OR,
     PLUS, MINUS, MULTIPLY, DIVIDE, POW, MODULO;
 }

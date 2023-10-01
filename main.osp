@@ -1,9 +1,13 @@
-myList = [1, 2, 3, 4]
-# Log items being evaluated
-myList.map {
-    println(
-        "%? < 3 = %?" %
-        {it, it < 3}
-    ),
-    it < 3
-}
+for () in 1..5:
+    print("here")
+
+for x, y in enumerate(my_list):
+    print(x, y)
+
+people = {"John": 20, "Paul": 22, Django: 22}
+people_bios = people.map_pairs { "My name is $key and I am $value years old" } .to_tuple()
+
+for (name: String, age: Int) in people:
+    println(name, age)
+
+people.map_pairs { println("key: $key, value: $value") }

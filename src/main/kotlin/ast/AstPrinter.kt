@@ -27,11 +27,9 @@ class HtmlAstPrinter : AstPrinterManager {
 
     init {
         generatedHtml.append("""
+            <!-- Style and JS created by w3schools and unchanged as of 27/9/2023 https://www.w3schools.com/howto/howto_js_treeview.asp-->
+            <!-- List elements generated and formatted properly by the Osprey Html Ast Printer -->
             <style>
-            /*
-                Created by W3SCHOOLS @ https://www.w3schools.com/howto/howto_js_treeview.asp
-            */
-            
             body {
                 font-family: "Liberation Mono",serif;
             }
@@ -154,21 +152,21 @@ class AstPrinter(private val printer: AstPrinterManager) : AstVisitor {
     }
 
     override fun visitDictionaryExpression(node: DictionaryExpression) {
-        if (node.expressions.isEmpty()) {
+        if (node.keyPairs.isEmpty()) {
             this.printer.print("Empty Dictionary")
             return
         }
 
         this.printer.printIndented("Dictionary") {
-            for (i in 0..(node.expressions.size / 2)) {
-                this.printer.printIndented("Key") { this.visit(node.expressions[2 * i]) }
-                this.printer.printIndented("Value") { this.visit(node.expressions[2 * i + 1]) }
+            for ((key, value) in node.keyPairs) {
+                this.printer.printIndented("Key") { this.visit(key) }
+                this.printer.printIndented("Value") { this.visit(value) }
             }
         }
     }
 
     override fun visitLiteralString(node: LiteralString) {
-        this.printer.print("String '${node.string}'")
+        this.printer.print("String ('${node.string}')")
     }
 
     override fun visitLiteralFloat(node: LiteralFloat) {
@@ -218,7 +216,7 @@ class AstPrinter(private val printer: AstPrinterManager) : AstVisitor {
                 } else {
                     this.printer.printIndented("Keywords") {
                         for ((name, value) in node.keywords.entries) {
-                            this.printer.printIndented("Keyword $name") {
+                            this.printer.printIndented("Keyword ($name)") {
                                 this.printer.printIndented("Value") { this.visit(value) }
                             }
                         }
@@ -305,6 +303,39 @@ class AstPrinter(private val printer: AstPrinterManager) : AstVisitor {
     override fun visitExpressionUnit(node: ExpressionUnit) {
         this.printer.printIndented("Expression Unit") {
             this.printIndentedExpressionCollection("Expression", node.expressions)
+        }
+    }
+
+    override fun visitEllipses(node: Ellipses) {
+        this.printer.print("Ellipses (...)")
+    }
+
+    override fun visitIfStatement(node: IfStatement) {
+        this.printer.printIndented("If Statement") {
+            this.printer.printIndented("If Expression") { this.visit(node.ifExpression.first) }
+            this.printer.printIndented("If Then") { this.visit(node.ifExpression.second) }
+            node.elifExpressions?.map {
+                this.printer.printIndented("Elif Expression") { this.visit(it.first) }
+                this.printer.printIndented("Elif Then") { this.visit(it.second) }
+            }
+            if (node.elseExpression != null) {
+                this.printer.printIndented("Else Then") { this.visit(node.elseExpression) }
+            }
+        }
+    }
+
+    override fun visitForStatement(node: ForStatement) {
+        this.printer.printIndented("For Statement") {
+            this.printer.printIndented("Names") {
+                node.names.map {
+                    this.printer.print("Name (${it.name})")
+                    if (it.annotation != null) {
+                        this.printer.printIndented("Annotation") { this.visit(it.annotation) }
+                    }
+                }
+            }
+            this.printer.printIndented("Iterable") { this.visit(node.iterable) }
+            this.printer.printIndented("Loop Then") { this.visit(node.statements) }
         }
     }
 }

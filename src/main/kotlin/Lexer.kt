@@ -5,7 +5,7 @@ import OspreyClass.Companion.SyntaxErrorOspreyClass
  * Any type that is not mentioned is an illegal character or expression and will raise a syntax error by the lexer
  */
 enum class Type {
-    IDENTIFIER, KEYWORD, FLOAT, INTEGER, STRING, RAW_STRING, END_LINE, START_OF_FILE, END_OF_FILE, INDENT, DEDENT, AT, PLUS, OPEN_PARENS, LESS_THAN, SLASH, EQUALS, CLOSE_BRACKETS, STAR, MINUS, OPEN_BRACKETS, MORE_THAN, CLOSE_PARENS, OPEN_CURLY, DOT, QUESTION_MARK, CLOSE_CURLY, COLON, SEMI_COLON, COMMA, PERCENT, DOUBLE_QUESTION, DOUBLE_EQUALS, DOUBLE_STAR, DOUBLE_DOT, ELVIS, BANG_EQUALS, ARROW_LEFT, ARROW_RIGHT, WIDE_ARROW_RIGHT, LESS_THAN_OR_EQUALS, MORE_THAN_OR_EQUALS, WHITESPACE;
+    IDENTIFIER, KEYWORD, FLOAT, INTEGER, STRING, RAW_STRING, END_LINE, ELLIPSES, START_OF_FILE, END_OF_FILE, INDENT, DEDENT, AT, PLUS, OPEN_PARENS, LESS_THAN, SLASH, EQUALS, CLOSE_BRACKETS, STAR, MINUS, OPEN_BRACKETS, MORE_THAN, CLOSE_PARENS, OPEN_CURLY, DOT, QUESTION_MARK, CLOSE_CURLY, COLON, SEMI_COLON, COMMA, PERCENT, DOUBLE_QUESTION, DOUBLE_EQUALS, DOUBLE_STAR, DOUBLE_DOT, ELVIS, BANG_EQUALS, ARROW_LEFT, ARROW_RIGHT, WIDE_ARROW_RIGHT, LESS_THAN_OR_EQUALS, MORE_THAN_OR_EQUALS, WHITESPACE;
 
     /**
      * The String representation of the type. This is used by the parser to create error messages that give more context
@@ -20,6 +20,7 @@ enum class Type {
         STRING -> "String"
         RAW_STRING -> "String"
         END_LINE -> "End of line"
+        ELLIPSES -> "..."
         START_OF_FILE -> "Start of file"
         END_OF_FILE -> "End of file"
         INDENT -> "Indent"
@@ -230,6 +231,12 @@ open class Lexer(private val source: String, val fileName: String) {
             return Lexeme(Type.END_LINE, "", this, line, linePos, line, linePos)
         }
 
+        if (this.pos + 2 < this.source.length && this.source.substring(this.pos, this.pos + 3) == "...") {
+            this.pos += 3
+            this.linePos += 3
+            return Lexeme(Type.ELLIPSES, "", this, line, linePos, this.line, this.linePos)
+        }
+
         if (this.pos + 1 < this.source.length) {
             val sub2 = this.source.substring(this.pos, this.pos + 2)
             when (sub2) {
@@ -315,13 +322,20 @@ open class Lexer(private val source: String, val fileName: String) {
             }
 
             if (this.pos < this.source.length && this.source[this.pos] == '.') {
-                while (this.pos < this.source.length && this.source[this.pos].isDigit()) {
-                    num.append(this.source[this.pos])
+                if (this.pos < this.source.length && this.source[this.pos].isDigit()) {
                     this.pos++
                     this.linePos++
-                }
+                    num.append(".")
+                    while (this.pos < this.source.length && this.source[this.pos].isDigit()) {
+                        num.append(this.source[this.pos])
+                        this.pos++
+                        this.linePos++
+                    }
 
-                return Lexeme(Type.FLOAT, num.toString(), this, line, linePos, this.line, this.linePos)
+                    return Lexeme(Type.FLOAT, num.toString(), this, line, linePos, this.line, this.linePos)
+                } else {
+                    return Lexeme(Type.INTEGER, num.toString(), this, line, linePos, this.line, this.linePos)
+                }
             }
 
             return Lexeme(Type.INTEGER, num.toString(), this, line, linePos, this.line, this.linePos)

@@ -25,6 +25,9 @@ interface AstVisitor {
         is AssignmentExpression -> this.visitAssignmentExpression(node)
         is AssignmentsExpression -> this.visitAssignmentsExpression(node)
         is ExpressionUnit -> this.visitExpressionUnit(node)
+        is Ellipses -> this.visitEllipses(node)
+        is IfStatement -> this.visitIfStatement(node)
+        is ForStatement -> this.visitForStatement(node)
         else -> throw OspreyThrowable(
             OspreyClass.FatalOspreyClass,
             "An abstract syntax tree somewhere was passed an unhandled node %s".format(node::class.simpleName)
@@ -52,4 +55,7 @@ interface AstVisitor {
     fun visitAssignmentExpression(node: AssignmentExpression)
     fun visitAssignmentsExpression(node: AssignmentsExpression)
     fun visitExpressionUnit(node: ExpressionUnit)
+    fun visitEllipses(node: Ellipses)
+    fun visitIfStatement(node: IfStatement)
+    fun visitForStatement(node: ForStatement)
 }

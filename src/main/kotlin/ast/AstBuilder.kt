@@ -93,9 +93,14 @@ class AstBuilder(source: String, fileName: String) {
     private fun statements(delimiter: Type): Statements {
         val head = this.lexeme
         val statements = Stack<Statement>()
-        while (true) {
+        while (this.lexeme.type != Type.END_OF_FILE) {
             if (this.lexeme.type == delimiter) {
                 break
+            } else if (this.lexeme.type == Type.END_OF_FILE) {
+                throw OspreyThrowable(
+                    SyntaxErrorOspreyClass,
+                    this.lexer.syntaxError("Unexpected End of File", this.lexeme)
+                )
             }
             statements.add(this.multiLineStatement())
         }
@@ -138,43 +143,133 @@ class AstBuilder(source: String, fileName: String) {
 
     private fun multiLineStatement(): Statement {
         val head = this.lexeme
-        return this.singleLineStatement()
+        return if (head.isKeyword("if")) {
+            this.ifStatement()
+        } else if (head.isKeyword("for")) {
+            this.forStatement()
+        } else {
+            this.singleLineStatement()
+        }
+    }
+
+    private fun ifStatement(): IfStatement {
+        val head = this.lexeme
+        this.eatKeyword("if")
+        val ifExpression = this.expression()
+        val ifStatements = this.scope()
+        var elifStatements: ArrayList<Pair<Expression, Statement>> = ArrayList()
+        var elseStatements: Statement? = null
+        while (this.lexeme.isKeyword("else")) {
+            this.advance()
+            if (this.lexeme.isKeyword("if")) {
+                this.advance()
+                elifStatements.add(Pair(this.expression(), this.scope()))
+            } else {
+                elseStatements = this.scope()
+                break
+            }
+        }
+
+        return IfStatement(
+            Pair(ifExpression, ifStatements), (if (elifStatements.isEmpty()) {
+                null
+            } else {
+                elifStatements
+            })?.toTypedArray(), elseStatements, head
+        )
+    }
+
+    private fun forStatement(): ForStatement {
+        val head = this.lexeme
+        this.eatKeyword("for")
+        val args: Pair<Array<AnnotatedName>, HashMap<String, AnnotatedExpression>>
+
+        if (this.lexeme.type == Type.OPEN_PARENS) {
+            this.advance()
+            if (this.lexeme.type == Type.CLOSE_PARENS) {
+                // TODO have a better way of doing this, maybe remove feature or make it nullable
+                args = Pair(arrayOf(), HashMap())
+                this.advance()
+            } else {
+                args = this.giveArguments()
+                this.eat(Type.CLOSE_PARENS)
+            }
+        } else {
+            args = this.giveArguments()
+            if (args.first.size < 1) {
+                throw OspreyThrowable(
+                    SyntaxErrorOspreyClass,
+                    this.lexer.syntaxError(
+                        "For loop iterable names must provide at least 1 name or use: \"for () in\"",
+                        head
+                    )
+                )
+            }
+        }
+
+        this.eatKeyword("in")
+
+        val iterable = this.expression()
+        val statements = this.scope()
+
+        if (args.second.isNotEmpty()) {
+            throw OspreyThrowable(
+                SyntaxErrorOspreyClass,
+                this.lexer.syntaxError(
+                    "For loops cannot be given keyword arguments. Supplied \"%s\"".format(
+                        args.second.keys.joinToString("\", \"")
+                    ), head
+                )
+            )
+        }
+
+        return ForStatement(args.first, iterable, statements, head)
     }
 
     private fun singleLineStatement(): Statement {
         val head = this.lexeme
-        val expressions = this.expressionSequence()
-        val expression = if (expressions.size == 1) {
-            expressions[0]
-        } else {
-            TupleExpression(expressions, head)
-        }
-
-
-        if (this.lexeme.type == Type.EQUALS) {
-            this.advance()
-            if (expressions.all { it is Lookup || it is GetAttribute || it is MacroCall }) {
-                val assignmentValue = TupleExpression(this.expressionSequence(), head)
+        return when (head.type) {
+            Type.ELLIPSES -> {
+                this.advance()
                 this.eat(Type.END_LINE)
-                return ExpressionStatement(AssignmentsExpression(expressions.map {
-                    when (it) {
-                        is Lookup -> NameAssignment(it.name)
-                        is GetAttribute -> AttributeAssignment(it.subject, it.name)
-                        is MacroCall -> MacroAssignment(it.subject, it.args)
-                        else -> {
-                            throw OspreyThrowable(SyntaxErrorOspreyClass, "Impossible assignment error")
-                        }
-                    }
-                }.toTypedArray(), assignmentValue, head), head)
-            } else {
-                throw OspreyThrowable(
-                    SyntaxErrorOspreyClass,
-                    this.lexer.syntaxError("Invalid assignment target/s", head)
-                )
+                Ellipses(head)
             }
-        } else {
-            this.eat(Type.END_LINE)
-            return ExpressionStatement(expression, head)
+
+            else -> {
+                val expressions = this.expressionSequence()
+                val expression = if (expressions.size == 1) {
+                    expressions[0]
+                } else {
+                    TupleExpression(expressions, head)
+                }
+
+
+                if (this.lexeme.type == Type.EQUALS) {
+                    this.advance()
+                    if (expressions.all { it is Lookup || it is GetAttribute || it is MacroCall }) {
+                        val assignmentValue = TupleExpression(this.expressionSequence(), head)
+                        this.eat(Type.END_LINE)
+                        ExpressionStatement(AssignmentsExpression(expressions.map {
+                            when (it) {
+                                is Lookup -> NameAssignment(it.name)
+                                is GetAttribute -> AttributeAssignment(it.subject, it.name)
+                                is MacroCall -> MacroAssignment(it.subject, it.args)
+                                else -> {
+                                    throw OspreyThrowable(SyntaxErrorOspreyClass, "Impossible assignment error")
+                                }
+                            }
+                        }.toTypedArray(), assignmentValue, head), head)
+                    } else {
+                        throw OspreyThrowable(
+                            SyntaxErrorOspreyClass,
+                            this.lexer.syntaxError("Invalid assignment target/s", head)
+                        )
+                    }
+                } else {
+                    this.eat(Type.END_LINE)
+                    ExpressionStatement(expression, head)
+                }
+            }
         }
     }
 
@@ -194,7 +289,7 @@ class AstBuilder(source: String, fileName: String) {
 
     private fun boolean(): Expression {
         var left = this.identity()
-        while (true) {
+        while (this.lexeme.type != Type.END_OF_FILE) {
             val operator = this.lexeme
             left = if (this.lexeme.isKeyword("and")) {
                 this.advance()
@@ -211,7 +306,7 @@ class AstBuilder(source: String, fileName: String) {
 
     private fun identity(): Expression {
         var left = this.binary(0)
-        while (true) {
+        while (this.lexeme.type != Type.END_OF_FILE) {
             val operator = this.lexeme
             left = if (this.lexeme.isKeyword("is")) {
                 this.advance()
@@ -253,7 +348,7 @@ class AstBuilder(source: String, fileName: String) {
             return this.atomAccess()
         } else {
             var left = this.binary(precedence + 1)
-            while (true) {
+            while (this.lexeme.type != Type.END_OF_FILE) {
                 val operator = this.lexeme
                 val operatorPrecedence = when (operator.type) {
                     Type.DOUBLE_EQUALS -> 1
@@ -262,20 +357,21 @@ class AstBuilder(source: String, fileName: String) {
                     Type.MORE_THAN -> 1
                     Type.LESS_THAN_OR_EQUALS -> 1
                     Type.MORE_THAN_OR_EQUALS -> 1
-                    Type.DOUBLE_QUESTION -> 2
-                    Type.PLUS -> 3
-                    Type.MINUS -> 3
-                    Type.STAR -> 4
-                    Type.SLASH -> 4
-                    Type.DOUBLE_STAR -> 5
-                    Type.PERCENT -> 5
+                    Type.DOUBLE_DOT -> 2
+                    Type.DOUBLE_QUESTION -> 3
+                    Type.PLUS -> 4
+                    Type.MINUS -> 4
+                    Type.STAR -> 5
+                    Type.SLASH -> 5
+                    Type.DOUBLE_STAR -> 6
+                    Type.PERCENT -> 6
                     else -> -1
                 }
                 if (operatorPrecedence == precedence) {
                     this.advance()
                     left = BinaryExpression(
                         when (operator.type) {
-                            Type.EQUALS -> BinaryExpressionType.EQUALS
+                            Type.DOUBLE_EQUALS -> BinaryExpressionType.EQUALS
                             Type.BANG_EQUALS -> BinaryExpressionType.NOT_EQUALS
                             Type.LESS_THAN -> BinaryExpressionType.LESS_THAN
                             Type.MORE_THAN -> BinaryExpressionType.MORE_THAN
@@ -286,9 +382,13 @@ class AstBuilder(source: String, fileName: String) {
                             Type.MINUS -> BinaryExpressionType.MINUS
                             Type.STAR -> BinaryExpressionType.MULTIPLY
                             Type.SLASH -> BinaryExpressionType.DIVIDE
+                            Type.DOUBLE_DOT -> BinaryExpressionType.RANGE_BETWEEN
                             Type.DOUBLE_STAR -> BinaryExpressionType.POW
                             Type.PERCENT -> BinaryExpressionType.MODULO
-                            else -> throw OspreyThrowable(OspreyClass.FatalOspreyClass, "Error code 1591524")
+                            else -> throw OspreyThrowable(
+                                OspreyClass.FatalOspreyClass,
+                                "Binary operator to type conversion failure"
+                            )
                         }, left, this.binary(precedence + 1), operator
                     )
                 } else {
@@ -302,7 +402,7 @@ class AstBuilder(source: String, fileName: String) {
     private fun callArguments(): Pair<Array<Expression>, HashMap<String, Expression>> {
         val args = ArrayList<Expression>()
         val keywords = HashMap<String, Expression>()
-        while (true) {
+        while (this.lexeme.type != Type.END_OF_FILE) {
             val expression = this.expression()
             if (this.lexeme.type == Type.EQUALS) {
                 this.advance()
@@ -340,7 +440,7 @@ class AstBuilder(source: String, fileName: String) {
         val args = ArrayList<AnnotatedName>()
         val keywords = HashMap<String, AnnotatedExpression>()
         val usedNames = HashMap<String, Boolean>()
-        while (true) {
+        while (this.lexeme.type != Type.END_OF_FILE) {
             var annotation: Expression? = null
             val name = this.eat(Type.IDENTIFIER)
 
@@ -377,7 +477,7 @@ class AstBuilder(source: String, fileName: String) {
 
     private fun atomAccess(): Expression {
         var subject = this.atom()
-        while (true) {
+        while (this.lexeme.type != Type.END_OF_FILE) {
             val operator = this.lexeme
             when (operator.type) {
                 Type.OPEN_PARENS -> {
@@ -541,23 +641,25 @@ class AstBuilder(source: String, fileName: String) {
                     this.eat(Type.CLOSE_CURLY)
                     TupleExpression(arrayOf(), atomHead)
                 } else {
-                    val values = ArrayList<Expression>()
-                    values.add(this.expression())
+                    val first = this.expression()
                     if (this.lexeme.type == Type.COLON) {
                         this.advance()
-                        values.add(this.expression())
+                        val pairs = ArrayList<Pair<Expression, Expression>>()
+                        pairs.add(Pair(first, this.expression()))
                         while (this.lexeme.type == Type.COMMA) {
                             this.advance()
-                            values.add(this.expression())
+                            val key = this.expression()
                             this.eat(Type.COLON)
-                            values.add(this.expression())
+                            pairs.add(Pair(key, this.expression()))
                             if (this.lexeme.type == Type.CLOSE_CURLY) {
                                 break
                             }
                         }
                         this.eat(Type.CLOSE_CURLY)
-                        DictionaryExpression(values.toTypedArray(), atomHead)
+                        DictionaryExpression(pairs.toTypedArray(), atomHead)
                     } else {
+                        val values = ArrayList<Expression>()
+                        values.add(first)
                         while (this.lexeme.type == Type.COMMA) {
                             this.advance()
                             values.add(this.expression())

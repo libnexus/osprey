@@ -1,8 +1,6 @@
+<!-- Style and JS created by w3schools and unchanged as of 27/9/2023 https://www.w3schools.com/howto/howto_js_treeview.asp-->
+<!-- List elements generated and formatted properly by the Osprey Html Ast Printer -->
 <style>
-/*
-    Created by W3SCHOOLS @ https://www.w3schools.com/howto/howto_js_treeview.asp
-*/
-
 body {
     font-family: "Liberation Mono",serif;
 }
@@ -44,13 +42,123 @@ ul, #myUL {
 <ul id="myUL">
     <li><span class="caret">AST Generation</span>
         <ul class="nested">
+            <li><span class="caret">For Statement</span>
+                <ul class="nested">
+                    <li><span class="caret">Names</span>
+                        <ul class="nested">
+                        </ul>
+                    </li>
+                    <li><span class="caret">Iterable</span>
+                        <ul class="nested">
+                            <li><span class="caret">Binary (Range_between)</span>
+                                <ul class="nested">
+                                    <li><span class="caret">Left</span>
+                                        <ul class="nested">
+                                            <li>Integer (1)</li>
+                                        </ul>
+                                    </li>
+                                    <li><span class="caret">Right</span>
+                                        <ul class="nested">
+                                            <li>Integer (5)</li>
+                                        </ul>
+                                    </li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </li>
+                    <li><span class="caret">Loop Then</span>
+                        <ul class="nested">
+                            <li><span class="caret">Call</span>
+                                <ul class="nested">
+                                    <li><span class="caret">Subject</span>
+                                        <ul class="nested">
+                                            <li>Lookup (print)</li>
+                                        </ul>
+                                    </li>
+                                    <li><span class="caret">Arguments</span>
+                                        <ul class="nested">
+                                            <li><span class="caret">Argument</span>
+                                                <ul class="nested">
+                                                    <li>String ('here')</li>
+                                                </ul>
+                                            </li>
+                                        </ul>
+                                    </li>
+                                    <li>No Keywords</li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </li>
+                </ul>
+            </li>
+            <li><span class="caret">For Statement</span>
+                <ul class="nested">
+                    <li><span class="caret">Names</span>
+                        <ul class="nested">
+                            <li>Name (x)</li>
+                            <li>Name (y)</li>
+                        </ul>
+                    </li>
+                    <li><span class="caret">Iterable</span>
+                        <ul class="nested">
+                            <li><span class="caret">Call</span>
+                                <ul class="nested">
+                                    <li><span class="caret">Subject</span>
+                                        <ul class="nested">
+                                            <li>Lookup (enumerate)</li>
+                                        </ul>
+                                    </li>
+                                    <li><span class="caret">Arguments</span>
+                                        <ul class="nested">
+                                            <li><span class="caret">Argument</span>
+                                                <ul class="nested">
+                                                    <li>Lookup (my_list)</li>
+                                                </ul>
+                                            </li>
+                                        </ul>
+                                    </li>
+                                    <li>No Keywords</li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </li>
+                    <li><span class="caret">Loop Then</span>
+                        <ul class="nested">
+                            <li><span class="caret">Call</span>
+                                <ul class="nested">
+                                    <li><span class="caret">Subject</span>
+                                        <ul class="nested">
+                                            <li>Lookup (print)</li>
+                                        </ul>
+                                    </li>
+                                    <li><span class="caret">Arguments</span>
+                                        <ul class="nested">
+                                            <li><span class="caret">Argument</span>
+                                                <ul class="nested">
+                                                    <li>Lookup (x)</li>
+                                                </ul>
+                                            </li>
+                                            <li><span class="caret">Argument</span>
+                                                <ul class="nested">
+                                                    <li>Lookup (y)</li>
+                                                </ul>
+                                            </li>
+                                        </ul>
+                                    </li>
+                                    <li>No Keywords</li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </li>
+                </ul>
+            </li>
             <li><span class="caret">Assign Multiple</span>
                 <ul class="nested">
                     <li><span class="caret">Assignment targets</span>
                         <ul class="nested">
                             <li><span class="caret">Assignment</span>
                                 <ul class="nested">
-                                    <li>Assign name (myList)</li>
+                                    <li>Assign name (people)</li>
                                 </ul>
                             </li>
                         </ul>
@@ -61,26 +169,36 @@ ul, #myUL {
                                 <ul class="nested">
                                     <li><span class="caret">-</span>
                                         <ul class="nested">
-                                            <li><span class="caret">List</span>
+                                            <li><span class="caret">Dictionary</span>
                                                 <ul class="nested">
-                                                    <li><span class="caret">-</span>
+                                                    <li><span class="caret">Key</span>
                                                         <ul class="nested">
-                                                            <li>Integer (1)</li>
+                                                            <li>String ('John')</li>
                                                         </ul>
                                                     </li>
-                                                    <li><span class="caret">-</span>
+                                                    <li><span class="caret">Value</span>
                                                         <ul class="nested">
-                                                            <li>Integer (2)</li>
+                                                            <li>Integer (20)</li>
                                                         </ul>
                                                     </li>
-                                                    <li><span class="caret">-</span>
+                                                    <li><span class="caret">Key</span>
                                                         <ul class="nested">
-                                                            <li>Integer (3)</li>
+                                                            <li>String ('Paul')</li>
                                                         </ul>
                                                     </li>
-                                                    <li><span class="caret">-</span>
+                                                    <li><span class="caret">Value</span>
                                                         <ul class="nested">
-                                                            <li>Integer (4)</li>
+                                                            <li>Integer (22)</li>
+                                                        </ul>
+                                                    </li>
+                                                    <li><span class="caret">Key</span>
+                                                        <ul class="nested">
+                                                            <li>Lookup (Django)</li>
+                                                        </ul>
+                                                    </li>
+                                                    <li><span class="caret">Value</span>
+                                                        <ul class="nested">
+                                                            <li>Integer (22)</li>
                                                         </ul>
                                                     </li>
                                                 </ul>
@@ -93,16 +211,153 @@ ul, #myUL {
                     </li>
                 </ul>
             </li>
+            <li><span class="caret">Assign Multiple</span>
+                <ul class="nested">
+                    <li><span class="caret">Assignment targets</span>
+                        <ul class="nested">
+                            <li><span class="caret">Assignment</span>
+                                <ul class="nested">
+                                    <li>Assign name (people_bios)</li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </li>
+                    <li><span class="caret">Unpack-able? Value</span>
+                        <ul class="nested">
+                            <li><span class="caret">Tuple</span>
+                                <ul class="nested">
+                                    <li><span class="caret">-</span>
+                                        <ul class="nested">
+                                            <li><span class="caret">Call</span>
+                                                <ul class="nested">
+                                                    <li><span class="caret">Subject</span>
+                                                        <ul class="nested">
+                                                            <li><span class="caret">GetAttribute</span>
+                                                                <ul class="nested">
+                                                                    <li>Name (to_tuple)</li>
+                                                                    <li><span class="caret">Subject</span>
+                                                                        <ul class="nested">
+                                                                            <li><span class="caret">Call</span>
+                                                                                <ul class="nested">
+                                                                                    <li><span class="caret">Subject</span>
+                                                                                        <ul class="nested">
+                                                                                            <li><span class="caret">GetAttribute</span>
+                                                                                                <ul class="nested">
+                                                                                                    <li>Name (map_pairs)</li>
+                                                                                                    <li><span class="caret">Subject</span>
+                                                                                                        <ul class="nested">
+                                                                                                            <li>Lookup (people)</li>
+                                                                                                        </ul>
+                                                                                                    </li>
+                                                                                                </ul>
+                                                                                            </li>
+                                                                                        </ul>
+                                                                                    </li>
+                                                                                    <li><span class="caret">Arguments</span>
+                                                                                        <ul class="nested">
+                                                                                            <li><span class="caret">Argument</span>
+                                                                                                <ul class="nested">
+                                                                                                    <li><span class="caret">Expression Unit</span>
+                                                                                                        <ul class="nested">
+                                                                                                            <li><span class="caret">Expressions</span>
+                                                                                                                <ul class="nested">
+                                                                                                                    <li><span class="caret">Expression</span>
+                                                                                                                        <ul class="nested">
+                                                                                                                            <li>String ('My name is $key and I am $value years old')</li>
+                                                                                                                        </ul>
+                                                                                                                    </li>
+                                                                                                                </ul>
+                                                                                                            </li>
+                                                                                                        </ul>
+                                                                                                    </li>
+                                                                                                </ul>
+                                                                                            </li>
+                                                                                        </ul>
+                                                                                    </li>
+                                                                                    <li>No Keywords</li>
+                                                                                </ul>
+                                                                            </li>
+                                                                        </ul>
+                                                                    </li>
+                                                                </ul>
+                                                            </li>
+                                                        </ul>
+                                                    </li>
+                                                    <li>No Argument</li>
+                                                    <li>No Keywords</li>
+                                                </ul>
+                                            </li>
+                                        </ul>
+                                    </li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </li>
+                </ul>
+            </li>
+            <li><span class="caret">For Statement</span>
+                <ul class="nested">
+                    <li><span class="caret">Names</span>
+                        <ul class="nested">
+                            <li>Name (name)</li>
+                            <li><span class="caret">Annotation</span>
+                                <ul class="nested">
+                                    <li>Lookup (String)</li>
+                                </ul>
+                            </li>
+                            <li>Name (age)</li>
+                            <li><span class="caret">Annotation</span>
+                                <ul class="nested">
+                                    <li>Lookup (Int)</li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </li>
+                    <li><span class="caret">Iterable</span>
+                        <ul class="nested">
+                            <li>Lookup (people)</li>
+                        </ul>
+                    </li>
+                    <li><span class="caret">Loop Then</span>
+                        <ul class="nested">
+                            <li><span class="caret">Call</span>
+                                <ul class="nested">
+                                    <li><span class="caret">Subject</span>
+                                        <ul class="nested">
+                                            <li>Lookup (println)</li>
+                                        </ul>
+                                    </li>
+                                    <li><span class="caret">Arguments</span>
+                                        <ul class="nested">
+                                            <li><span class="caret">Argument</span>
+                                                <ul class="nested">
+                                                    <li>Lookup (name)</li>
+                                                </ul>
+                                            </li>
+                                            <li><span class="caret">Argument</span>
+                                                <ul class="nested">
+                                                    <li>Lookup (age)</li>
+                                                </ul>
+                                            </li>
+                                        </ul>
+                                    </li>
+                                    <li>No Keywords</li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </li>
+                </ul>
+            </li>
             <li><span class="caret">Call</span>
                 <ul class="nested">
                     <li><span class="caret">Subject</span>
                         <ul class="nested">
                             <li><span class="caret">GetAttribute</span>
                                 <ul class="nested">
-                                    <li>Name (map)</li>
+                                    <li>Name (map_pairs)</li>
                                     <li><span class="caret">Subject</span>
                                         <ul class="nested">
-                                            <li>Lookup (myList)</li>
+                                            <li>Lookup (people)</li>
                                         </ul>
                                     </li>
                                 </ul>
@@ -130,69 +385,12 @@ ul, #myUL {
                                                                         <ul class="nested">
                                                                             <li><span class="caret">Argument</span>
                                                                                 <ul class="nested">
-                                                                                    <li><span class="caret">Binary (Modulo)</span>
-                                                                                        <ul class="nested">
-                                                                                            <li><span class="caret">Left</span>
-                                                                                                <ul class="nested">
-                                                                                                    <li>String '%? < 3 = %?'</li>
-                                                                                                </ul>
-                                                                                            </li>
-                                                                                            <li><span class="caret">Right</span>
-                                                                                                <ul class="nested">
-                                                                                                    <li><span class="caret">Tuple</span>
-                                                                                                        <ul class="nested">
-                                                                                                            <li><span class="caret">-</span>
-                                                                                                                <ul class="nested">
-                                                                                                                    <li>Lookup (it)</li>
-                                                                                                                </ul>
-                                                                                                            </li>
-                                                                                                            <li><span class="caret">-</span>
-                                                                                                                <ul class="nested">
-                                                                                                                    <li><span class="caret">Binary (Less_than)</span>
-                                                                                                                        <ul class="nested">
-                                                                                                                            <li><span class="caret">Left</span>
-                                                                                                                                <ul class="nested">
-                                                                                                                                    <li>Lookup (it)</li>
-                                                                                                                                </ul>
-                                                                                                                            </li>
-                                                                                                                            <li><span class="caret">Right</span>
-                                                                                                                                <ul class="nested">
-                                                                                                                                    <li>Integer (3)</li>
-                                                                                                                                </ul>
-                                                                                                                            </li>
-                                                                                                                        </ul>
-                                                                                                                    </li>
-                                                                                                                </ul>
-                                                                                                            </li>
-                                                                                                        </ul>
-                                                                                                    </li>
-                                                                                                </ul>
-                                                                                            </li>
-                                                                                        </ul>
-                                                                                    </li>
+                                                                                    <li>String ('key: $key, value: $value')</li>
                                                                                 </ul>
                                                                             </li>
                                                                         </ul>
                                                                     </li>
                                                                     <li>No Keywords</li>
-                                                                </ul>
-                                                            </li>
-                                                        </ul>
-                                                    </li>
-                                                    <li><span class="caret">Expression</span>
-                                                        <ul class="nested">
-                                                            <li><span class="caret">Binary (Less_than)</span>
-                                                                <ul class="nested">
-                                                                    <li><span class="caret">Left</span>
-                                                                        <ul class="nested">
-                                                                            <li>Lookup (it)</li>
-                                                                        </ul>
-                                                                    </li>
-                                                                    <li><span class="caret">Right</span>
-                                                                        <ul class="nested">
-                                                                            <li>Integer (3)</li>
-                                                                        </ul>
-                                                                    </li>
                                                                 </ul>
                                                             </li>
                                                         </ul>

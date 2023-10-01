@@ -138,7 +138,7 @@ class FloatOspreyObject(type: OspreyClass, var float: Float) : OspreyObject(type
  *
  * @param type
  */
-class IntegerOspreyObject(type: OspreyClass, var int: Int) : OspreyObject(type) {
+class IntegerOspreyObject(type: OspreyClass, val int: Int) : OspreyObject(type) {
     /**
      * Companion
      *
@@ -147,4 +147,12 @@ class IntegerOspreyObject(type: OspreyClass, var int: Int) : OspreyObject(type) 
     companion object {
         val cache = ObjectCache { number: Int -> IntegerOspreyObject(IntegerOspreyClass, number) }
     }
+}
+
+fun integer(int: Int) = if (-255 < int && int < 255) {
+    IntegerOspreyObject.cache.newObject(int)
+} else {
+    IntegerOspreyObject(
+        IntegerOspreyClass, int
+    )
 }
