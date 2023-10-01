@@ -52,7 +52,7 @@ private class L(lists: Array<Array<OspreyClass>>) {
 
 
     fun inTails(head: OspreyClass): Boolean =
-            this.lists.map { it.tail().contains(head) }.contains(true)
+            this.lists.any { it.tail().contains(head) }
 
 
     fun remove(head: OspreyClass) {
@@ -64,7 +64,7 @@ private class L(lists: Array<Array<OspreyClass>>) {
     }
 
     fun finished(): Boolean =
-            !this.lists.map { it.bases.isNotEmpty() }.any { it }
+            !this.lists.any { it.bases.isNotEmpty() }
 
 }
 
